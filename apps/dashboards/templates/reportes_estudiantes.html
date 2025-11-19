@@ -1,0 +1,288 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+{% load custom_filters %}
+{% block title %}Reportes de Estudiantes{% endblock title %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/apex-charts/apex-charts.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables/datatables.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/apex-charts/apexcharts.js' %}"></script>
+<script src="{% static 'vendor/libs/datatables/datatables.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Reportes de Progreso de Estudiantes</h5>
+   
+      </div>
+      <div class="card-body">
+        <div class="row mb-4">
+        <div class="col-md-4">
+  <form method="get" action="{% url 'reporte_estudiantes' %}" class="d-flex w-100">
+    <div class="input-group input-group-merge w-100">
+      <span class="input-group-text"><i class="icon-base ri-search-line"></i></span>
+      <input 
+        type="text" 
+        class="form-control" 
+        name="q" 
+        value="{{ request.GET.q }}" 
+        placeholder="Buscar estudiante por nombre o ID..."
+      >
+    </div>
+    <button type="submit" class="btn btn-primary ms-2">
+      <i class="icon-base ri-search-line me-1"></i> Buscar
+    </button>
+  </form>
+</div>  
+        </div>
+
+       <!-- Replace the static student card with this dynamic version -->
+  <div class="row">
+  {% for estudiante_data in estudiantes_data %}
+  <div class="col-12 mb-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="row g-4">
+          <!-- Left Column - Student Info -->
+          <div class="col-md-4 text-center">
+            <div class="avatar avatar-xl mb-3">
+              <img src="{{ estudiante_data.estudiante.foto_perfil.url|default:'/static/img/avatars/1.png' }}" 
+                   alt="Avatar" class="rounded-circle">
+            </div>
+            <h5 class="mb-1">{{ estudiante_data.estudiante.nombre_usuario }}</h5>
+            <p class="text-muted mb-3">Estudiante - {{ estudiante_data.estudiante.get_nivel_display }}</p>
+            
+            <div class="d-flex justify-content-between mb-3">
+              <div>
+                <p class="mb-0 fw-semibold">{{ estudiante_data.progreso }}%</p>
+                <small class="text-muted">Progreso</small>
+              </div>
+              <div>
+                <p class="mb-0 fw-semibold">{{ estudiante_data.misiones_completadas }}/{{ estudiante_data.total_misiones }}</p>
+                <small class="text-muted">Misiones</small>
+              </div>
+              <div>
+                <p class="mb-0 fw-semibold">{{ estudiante_data.promedio|floatformat:1 }}</p>
+                <small class="text-muted">Promedio</small>
+              </div>
+            </div>
+            
+            <div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Progreso</span>
+                <span class="text-primary fw-semibold">{{ estudiante_data.progreso }}%</span>
+              </div>
+              <div class="progress mb-3" style="height: 10px;">
+                <div class="progress-bar bg-primary" role="progressbar" 
+                     style="width: {{ estudiante_data.progreso }}%" 
+                     aria-valuenow="{{ estudiante_data.progreso }}" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column - Skills -->
+          {% if estudiante_data.habilidades %}
+          <div class="col-md-8 border-start ps-4">
+            <h6 class="text-muted mb-3 text-center">Habilidades</h6>
+            <div class="row g-3">
+              {% for habilidad in estudiante_data.habilidades %}
+              <div class="col-md-6">
+                <div class="d-flex justify-content-between small mb-1">
+                  <span>{{ habilidad.nombre }}</span>
+                  <span class="fw-semibold">{{ habilidad.porcentaje }}%</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar" 
+                       role="progressbar" 
+                       style="width: {{ habilidad.porcentaje }}%;"
+                       aria-valuenow="{{ habilidad.porcentaje }}" 
+                       aria-valuemin="0" 
+                       aria-valuemax="100">
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="alert alert-info">No se encontraron estudiantes que coincidan con la búsqueda.</div>
+  </div>
+  {% endfor %}
+</div>
+
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Detalle de Misiones</h5>
+          </div>
+         <div class="table-responsive">
+  <table class="table table-hover" id="misionesTable">
+    <thead>
+      <tr>
+        <th>Estudiante</th>
+        <th>Misión</th>
+        <th>Estado</th>
+        <th>Calificación</th>
+        <th>Último Intento</th>
+        <th>Progreso</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for intento in intentos_estudiantes %}
+      <tr>
+        <td>{{ intento.estudiante.nombre_usuario }}</td>
+        <td>{{ intento.mision.titulo }}</td>
+        <td>
+          <span class="badge bg-{{ intento.completada|yesno:'success,warning' }}">
+            {{ intento.completada|yesno:"Completada,En Progreso" }}
+          </span>
+        </td>
+        <td>{{ intento.puntos_obtenidos|default:"-" }}</td>
+        <td>{{ intento.fecha_intento|timesince }}</td>
+        <td>
+          <div class="progress" style="height: 6px;">
+            <div class="progress-bar bg-{{ intento.completada|yesno:'success,warning' }}" 
+                 role="progressbar" 
+                 style="width: {{ intento.porcentaje_completado }}%" 
+                 aria-valuenow="{{ intento.porcentaje_completado }}" 
+                 aria-valuemin="0" 
+                 aria-valuemax="100"></div>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Filtros Avanzados -->
+<div class="modal fade" id="filtrosAvanzados" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Filtros Avanzados</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="filtrosForm">
+          <div class="mb-3">
+            <label class="form-label">Rango de Fechas</label>
+            <div class="input-group">
+              <input type="date" class="form-control" placeholder="Fecha de inicio">
+              <span class="input-group-text">a</span>
+              <input type="date" class="form-control" placeholder="Fecha de fin">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nivel de Dificultad</label>
+            <select class="form-select">
+              <option value="">Todos los niveles</option>
+              <option value="facil">Fácil</option>
+              <option value="medio">Medio</option>
+              <option value="dificil">Difícil</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Estado de la Misión</label>
+            <select class="form-select">
+              <option value="">Todos los estados</option>
+              <option value="completada">Completada</option>
+              <option value="en_curso">En Curso</option>
+              <option value="pendiente">Pendiente</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Rango de Calificaciones</label>
+            <div class="input-group">
+              <input type="number" class="form-control" placeholder="Mínimo" min="0" max="10">
+              <span class="input-group-text">a</span>
+              <input type="number" class="form-control" placeholder="Máximo" min="0" max="10">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-primary">
+          <i class="icon-base ri-filter-3-line me-1"></i> Aplicar Filtros
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize charts for each student
+  document.querySelectorAll('.student-progress-chart').forEach(chartEl => {
+    const progress = parseFloat(chartEl.dataset.progress);
+    const studentId = chartEl.dataset.studentId;
+    
+    new ApexCharts(chartEl, {
+      chart: {
+        height: 200,
+        type: 'radialBar',
+      },
+      plotOptions: {
+        radialBar: {
+          startAngle: -135,
+          endAngle: 135,
+          dataLabels: {
+            name: { offsetY: 80 },
+            value: {
+              offsetY: 0,
+              fontSize: '28px',
+              formatter: function(val) { return val + '%'; }
+            }
+          }
+        }
+      },
+      series: [progress],
+      colors: ['#5a8dee']
+    }).render();
+  });
+
+  // Initialize DataTable
+  $('#misionesTable').DataTable({
+    responsive: true,
+    order: [[4, 'desc']],  // Sort by last attempt by default
+    language: {
+      search: "",
+      searchPlaceholder: "Buscar misiones...",
+      lengthMenu: "Mostrar _MENU_ registros",
+      info: "Mostrando _START_ a _END_ de _TOTAL_ misiones",
+      paginate: {
+        previous: "Anterior",
+        next: "Siguiente"
+      }
+    }
+  });
+});
+</script>
+{% endblock %} 

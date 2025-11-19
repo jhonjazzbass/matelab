@@ -1,0 +1,22 @@
+<aside id="layout-menu" class="layout-menu menu-vertical menu">
+  {% if not navbar_full %}
+  <div class="app-brand demo">
+    <a href="{% url 'index' %}" class="app-brand-link">
+      <span class="app-brand-logo demo me-1">
+        {% include 'partials/logo.html' %}
+      </span>
+      <span class="app-brand-text demo menu-text fw-semibold ms-2">{% get_theme_variables 'template_name' %}</span>
+    </a>
+  </div>
+  {% endif %}
+
+  {# Menú dinámico basado en el rol del usuario #}
+ 
+    {% if user.rol.tipo == 'Estudiante' %}
+      {% include 'layout/partials/menu/vertical/student_menu.html' %}
+    {% elif user.rol.tipo == 'Profesor' %}
+      {% include 'layout/partials/menu/vertical/professor_menu.html' %}
+    {% elif user.rol.tipo == 'Admin' or user.is_superuser %}
+      {% include 'layout/partials/menu/vertical/admin_menu.html' %}
+  
+</aside>

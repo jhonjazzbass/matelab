@@ -1,0 +1,203 @@
+{% extends 'layout/master.html' %}
+
+{% block title %}Práctica - {{ titulo }}{% endblock %}
+
+{% block layout %}
+<!-- Layout wrapper: Start -->
+<div class="layout-wrapper layout-content-navbar">
+  <div class="layout-container">
+    <!-- Menu: Start -->
+    {% include 'layout/partials/menu/vertical/student_menu.html' %}
+    <!-- Menu: End -->
+
+    <!-- Layout page: Start -->
+    <div class="layout-page">
+      <!-- Navbar: Start -->
+      {% include 'layout/partials/navbar/navbar.html' %}
+      <!-- Navbar: End -->
+
+      <!-- Content wrapper: Start -->
+      <div class="content-wrapper">
+        <!-- Content: Start -->
+        <div class="container-xxl flex-grow-1 container-p-y">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0">{{ titulo }}</h2>
+            <button class="btn btn-outline-secondary" onclick="window.history.back()">
+              <i class="ti ti-arrow-back-up me-2"></i>Volver
+            </button>
+          </div>
+
+          <div class="card">
+            <div class="card-body">
+              <p class="mb-4">{{ descripcion }}</p>
+              
+              <div id="practicaContent" class="text-center">
+                <button class="btn btn-primary btn-lg mb-4" id="iniciarPractica">
+                  <i class="ti ti-player-play me-2"></i>Iniciar Práctica
+                </button>
+                
+                <div id="formularioRespuesta" style="display: none;">
+                  <div class="mb-4">
+                    <h4 class="mb-3">Resuelve el siguiente ejercicio:</h4>
+                    <div class="bg-light p-4 rounded-3 mb-4">
+                      <h2 class="display-4 fw-bold text-primary">{{ titulo }}</h2>
+                    </div>
+                    
+                    <div class="mb-4">
+                      <label for="respuestaUsuario" class="form-label h5">Tu respuesta:</label>
+                      <div class="input-group input-group-lg mb-3">
+                        <input type="number" 
+                               class="form-control form-control-lg text-center" 
+                               id="respuestaUsuario" 
+                               placeholder="Escribe tu respuesta" 
+                               required 
+                               autofocus>
+                        <button class="btn btn-success" type="button" id="verificarRespuesta">
+                          <i class="ti ti-check me-2"></i>Verificar
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div id="feedback" class="mt-4"></div>
+                    
+                    <div class="mt-4">
+                      <button class="btn btn-outline-secondary me-2" id="reiniciarBtn">
+                        <i class="ti ti-refresh me-2"></i>Reiniciar
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- / Content -->
+      </div>
+      <!-- / Content wrapper: End -->
+    </div>
+    <!-- / Layout page: End -->
+  </div>
+</div>
+<!-- / Layout wrapper: End -->
+{% endblock %}
+
+{% block page_css %}
+<style>
+  .input-group-lg .form-control,
+  .input-group-lg .btn {
+    height: 3.5rem;
+    font-size: 1.25rem;
+  }
+  
+  .display-4 {
+    font-size: 2.5rem;
+  }
+  
+  @media (min-width: 768px) {
+    .display-4 {
+      font-size: 3.5rem;
+    }
+  }
+  
+  .correct-answer {
+    border: 2px solid #28a745 !important;
+    background-color: rgba(40, 167, 69, 0.1) !important;
+  }
+  
+  .incorrect-answer {
+    border: 2px solid #dc3545 !important;
+    background-color: rgba(220, 53, 69, 0.1) !important;
+  }
+  
+  .feedback-animation {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+{% endblock %}
+
+{% block page_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const iniciarBtn = document.getElementById('iniciarPractica');
+    const formularioRespuesta = document.getElementById('formularioRespuesta');
+    const verificarBtn = document.getElementById('verificarRespuesta');
+    const reiniciarBtn = document.getElementById('reiniciarBtn');
+    const respuestaInput = document.getElementById('respuestaUsuario');
+    const feedbackElement = document.getElementById('feedback');
+    
+    // Obtener la solución del contexto de Django
+    const solucion = {{ solucion|safe }};
+    
+    // Inicializar la práctica
+    function iniciarPractica() {
+        iniciarBtn.style.display = 'none';
+        formularioRespuesta.style.display = 'block';
+        respuestaInput.focus();
+    }
+    
+    // Verificar la respuesta
+    function verificarRespuesta() {
+        const respuestaUsuario = parseInt(respuestaInput.value.trim());
+        
+        if (isNaN(respuestaUsuario)) {
+            mostrarFeedback('Por favor ingresa un número válido', 'warning');
+            return;
+        }
+        
+        // Limpiar clases anteriores
+        respuestaInput.classList.remove('correct-answer', 'incorrect-answer');
+        
+        if (respuestaUsuario === solucion) {
+            respuestaInput.classList.add('correct-answer');
+            mostrarFeedback('¡Correcto! ¡Buen trabajo!', 'success');
+        } else {
+            respuestaInput.classList.add('incorrect-answer');
+            mostrarFeedback(`Incorrecto. La respuesta correcta es: ${solucion}`, 'danger');
+        }
+    }
+    
+    // Mostrar retroalimentación
+    function mostrarFeedback(mensaje, tipo) {
+        feedbackElement.className = `alert alert-${tipo} feedback-animation`;
+        feedbackElement.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="ti ti-${tipo === 'success' ? 'circle-check' : 'alert-circle'} me-2"></i>
+                ${mensaje}
+            </div>
+        `;
+    }
+    
+    // Reiniciar la práctica
+    function reiniciarPractica() {
+        respuestaInput.value = '';
+        respuestaInput.classList.remove('correct-answer', 'incorrect-answer');
+        feedbackElement.innerHTML = '';
+        feedbackElement.className = '';
+        respuestaInput.focus();
+    }
+    
+    // Event listeners
+    iniciarBtn.addEventListener('click', iniciarPractica);
+    verificarBtn.addEventListener('click', verificarRespuesta);
+    reiniciarBtn.addEventListener('click', reiniciarPractica);
+    
+    // Permitir usar la tecla Enter para verificar
+    respuestaInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            verificarRespuesta();
+        }
+    });
+    
+    // Iniciar automáticamente si hay parámetros en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('autostart')) {
+        iniciarPractica();
+    }
+});
+</script>
+{% endblock %}

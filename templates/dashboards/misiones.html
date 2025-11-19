@@ -1,0 +1,756 @@
+{% extends 'layout/master.html' %}
+{% load custom_filters %}
+
+{% block title %}Misiones{% endblock %}
+
+{% block layout %}
+<!-- Layout wrapper: Start -->
+<div class="layout-wrapper layout-content-navbar">
+  <div class="layout-container">
+    <!-- Menu: Start --> 
+       {% if user.rol.tipo == 'Estudiante' %}
+      {% include 'layout/partials/menu/vertical/student_menu.html' %}
+    {% elif user.rol.tipo == 'Profesor' %}
+      {% include 'layout/partials/menu/vertical/professor_menu.html' %} 
+    {% endif %}
+    <!-- Menu: End -->
+
+    <!-- Layout page: Start -->
+    <div class="layout-page">
+      <!-- Navbar: Start -->
+      {% include 'layout/partials/navbar/navbar.html' %}
+      <!-- Navbar: End -->
+
+      <!-- Content wrapper: Start -->
+      <div class="content-wrapper">
+        <div class="container-xxl flex-grow-1 container-p-y">
+          <!-- Header -->
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0">Misiones</h2>
+          </div>
+
+          <div class="row g-4" id="misiones-container">
+            {% if user.rol.tipo == 'Estudiante' %}
+              {# Find the first incomplete mission #}
+              {% with first_incomplete_mission=misiones|first %}
+
+
+
+      {% with mostrar=True %}
+  {% for mision in misiones %}
+    {% if mostrar %}
+      {% include 'dashboards/partials/mision_card.html' with mision=mision show_mission=True %}
+      {% if mision.estado_actual != 'completado' %}
+        {% with mostrar=False %}{% endwith %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endwith %}
+
+
+
+              {% endwith %}
+            {% else %}
+              <!-- Vista normal para profesores -->
+              {% for mision in misiones %}
+                {% include 'dashboards/partials/mision_card.html' with mision=mision show_mission=True %}
+              {% empty %}
+                <div class="col-12">
+                  <div class="card">
+                    <div class="card-body text-center p-5">
+                      <i class="ti ti-mood-sad text-muted mb-3" style="font-size: 3rem;"></i>
+                      <h4>No hay misiones disponibles</h4>
+                      <p class="text-muted">No se encontraron misiones activas en este momento.</p>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+        <!-- / Content -->
+      </div>
+      <!-- / Content wrapper: End -->
+    </div>
+    <!-- / Layout page: End -->
+  </div>
+</div>
+<!-- / Layout wrapper: End -->
+
+<!-- Modal para mostrar detalles de la misión -->
+<div class="modal fade" id="misionDetalleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="misionTitulo">Título de la Misión</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        {% if user.rol.tipo == 'Profesor' %}
+        <!-- Vista para Profesores -->
+        <div id="vistaProfesor">
+          <h6 class="text-muted mb-3">Soluciones de Estudiantes</h6>
+          <div class="table-responsive">
+            <table class="table table-hover" id="tablaSoluciones">
+              <thead>
+                <tr>
+                  <th>Estudiante</th>
+                  <th>Solución Propuesta</th>
+                  <th>Estado</th>
+                  <th>Fecha de envío</th>
+                  <th>Calificar</th>
+                </tr>
+              </thead>
+              <tbody id="listaSoluciones">
+                <!-- Las soluciones se cargarán aquí dinámicamente -->
+              </tbody>
+            </table>
+          </div>
+          
+          <!-- Detalles de la solución seleccionada -->
+          <div class="card mt-4" id="detalleSolucionContainer" style="display: none;">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">Solución propuesta de <span id="nombreEstudiante"></span></h6>
+              <button type="button" class="btn-close" id="cerrarDetalle"></button>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                 <div class="border rounded p-3 bg-light" id="solucionDetalle"></div>
+              </div>
+              <div class="d-flex justify-content-between">
+                <div>
+                  <span class="badge me-2" id="estadoSolucion">Estado</span>
+                  <small class="text-muted" id="fechaSolucion"></small>
+                </div>
+                <div>
+                  <button class="btn btn-success btn-sm me-2" id="btnAprobar">
+                    <i class="ti ti-check me-1"></i> Aprobar
+                  </button>
+                  <button class="btn btn-danger btn-sm" id="btnRechazar">
+                    <i class="ti ti-x me-1"></i> Rechazar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <!-- Vista para Estudiantes -->
+        <div class="row mb-4">
+          <div class="col-md-8">
+            <h6 class="text-muted mb-3">Descripción de la misión</h6>
+            <div id="misionDescripcion" class="mb-4"></div>
+            
+          
+          </div>
+          
+          <div class="col-md-4">
+            <div class="card">
+              <div class="card-body">
+                <h6 class="card-title mb-3">Detalles de la misión</h6>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted">Estado:</span>
+                  <span id="misionEstado" class="badge bg-label-info">Pendiente</span>
+                </div>
+               
+                <div class="d-flex justify-content-between mb-3">
+                  <span class="text-muted">Fecha de vencimiento:</span>
+                  <span id="misionFecha" class="text-body">15 Oct 2025</span>
+                </div>
+                <hr class="my-3">
+                <div class="mb-3" id="respuestaContainer">
+                  <label for="respuestaMision" class="form-label">Tu respuesta:</label>
+                  <textarea class="form-control" id="respuestaMision" rows="3" placeholder="Escribe aquí tu respuesta..."></textarea>
+                  <div class="form-text">Asegúrate de revisar tu respuesta antes de enviar.</div>
+                </div>
+                <div class="d-grid gap-2">
+                  <button type="button" class="btn btn-success w-100" id="btnConfirmarRespuesta">
+                    <i class="ti ti-check me-2"></i> Confirmar respuesta
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast de éxito -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+  <div id="toastSuccess" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header bg-success text-white">
+      <i class="ti ti-check me-2"></i>
+      <strong class="me-auto">¡Éxito!</strong>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+    </div>
+    <div class="toast-body">
+      Tu respuesta ha sido enviada correctamente.
+    </div>
+  </div>
+  
+  <!-- Toast de error -->
+  <div id="toastError" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header bg-danger text-white">
+      <i class="ti ti-alert-circle me-2"></i>
+      <strong class="me-auto">Error</strong>
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+    </div>
+    <div class="toast-body">
+      Por favor, escribe una respuesta antes de enviar.
+    </div>
+  </div>
+</div>
+
+{% block page_js %}
+<script>
+  const modalElement = document.getElementById('misionDetalleModal');
+  let modal = null;
+
+  function cleanupModal() {
+    const backdrops = document.querySelectorAll('.modal-backdrop');
+    backdrops.forEach(backdrop => backdrop.remove());
+    
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+    document.body.classList.remove('modal-open');
+  }
+
+  function loadPolyaEstudiante(misionId, usuarioId, solucionTexto) {
+    try {
+      const card = document.querySelector(`.mision-card[data-mision-id="${misionId}"]`);
+      if (!card) return;
+
+      const solBox = document.getElementById(`polya-solucion-box-${misionId}`);
+      const solText = document.getElementById(`polya-solucion-text-${misionId}`);
+      if (solText) solText.textContent = solucionTexto || '';
+      if (solBox) solBox.style.display = solucionTexto ? 'block' : 'none';
+
+      const statusContainer = document.getElementById(`status-container-${misionId}`);
+      const polyaContainer = document.getElementById(`polya-container-${misionId}`);
+      if (statusContainer) statusContainer.style.display = '';
+      if (polyaContainer) polyaContainer.style.display = '';
+
+      const collapseEl = document.getElementById(`polyaStep4-${misionId}`);
+      if (collapseEl && !collapseEl.classList.contains('show')) {
+        try { new bootstrap.Collapse(collapseEl, { toggle: true }); } catch(e) {}
+      }
+
+      const byName = (base) => card.querySelector(`[name="${base}_${misionId}"]`);
+      const q = byName('polya_que_se_pide');
+      const d = byName('polya_datos');
+      const inc = byName('polya_incognitas');
+      const rep = byName('polya_representacion');
+      const est = byName('polya_estrategia');
+      const des = byName('polya_desarrollo');
+      const resInt = byName('polya_resultados_intermedios');
+      const tac1 = card.querySelector(`#tac1-${misionId}`);
+      const tac2 = card.querySelector(`#tac2-${misionId}`);
+      const tac3 = card.querySelector(`#tac3-${misionId}`);
+      const tac4 = card.querySelector(`#tac4-${misionId}`);
+
+      fetch(`/misiones/api/polya/${misionId}/estudiante/${usuarioId}/`, { credentials: 'same-origin' })
+        .then(r => r.json())
+        .then(j => {
+          if (!j || j.status !== 'success' || !j.polya) return;
+          const data = j.polya;
+          if (q) q.value = data.que_se_pide || '';
+          if (d) d.value = data.datos_conocidos || '';
+          if (inc) inc.value = data.incognitas || '';
+          if (rep) rep.value = data.representacion || '';
+          if (est) est.value = data.estrategia_principal || '';
+          if (des) des.value = data.desarrollo || '';
+          if (resInt) resInt.value = data.resultados_intermedios || '';
+          if (tac1) tac1.checked = !!data.tactica_similar;
+          if (tac2) tac2.checked = !!data.tactica_descomponer;
+          if (tac3) tac3.checked = !!data.tactica_ecuaciones;
+          if (tac4) tac4.checked = !!data.tactica_formula;
+
+          const revText = card.querySelector(`#polya-revision-text-${misionId}`);
+          const compText = card.querySelector(`#polya-comp-text-${misionId}`);
+          const conclText = card.querySelector(`#polya-concl-text-${misionId}`);
+          const confBadge = card.querySelector(`#polya-confianza-badge-${misionId}`);
+          if (revText) revText.textContent = data.revision_verificacion || '';
+          if (compText) compText.textContent = data.comprobacion_otro_metodo || '';
+          if (conclText) conclText.textContent = data.conclusion_final || '';
+          if (confBadge) confBadge.textContent = (data.confianza !== null && data.confianza !== undefined && data.confianza !== '') ? `${data.confianza}` : '—';
+
+          if (j.intento) {
+            const estado = j.intento.estado || 'pendiente';
+            const badge = document.getElementById(`status-badge-${misionId}`);
+            const prog = document.getElementById(`progress-bar-${misionId}`);
+            let txt = 'Pendiente';
+            let cls = 'bg-label-warning';
+            let pct = 10;
+            if (estado === 'completado') { txt = 'Completada'; cls = 'bg-label-success'; pct = 100; }
+            else if (estado === 'en_progreso') { txt = 'En progreso'; cls = 'bg-label-info'; pct = 60; }
+            else if (estado === 'rechazado') { txt = 'Incorrecto'; cls = 'bg-label-danger'; pct = 25; }
+            if (badge) { badge.textContent = txt; badge.className = `badge ${cls} me-2`; }
+            if (prog) { prog.style.width = `${pct}%`; prog.setAttribute('aria-valuenow', pct); }
+          }
+        })
+        .catch(() => {});
+    } catch (e) {}
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    if (modalElement) {
+      modal = new bootstrap.Modal(modalElement, {
+        backdrop: true,
+        keyboard: true,
+        focus: true
+      });
+
+      modalElement.addEventListener('hidden.bs.modal', function() {
+        cleanupModal();
+      });
+
+      modalElement.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const misionId = button.getAttribute('data-mision-id');
+        const misionTitulo = button.getAttribute('data-mision-titulo');
+        const misionCard = button.closest('.card');
+        if (misionId) {
+          modalElement.dataset.misionId = misionId;
+        }
+        
+        const vistaEstudiante = document.getElementById('vistaEstudiante');
+        const vistaProfesor = document.getElementById('vistaProfesor');
+        
+        const esProfesor = vistaProfesor !== null;
+        
+        if (esProfesor) {
+          const listaSoluciones = document.getElementById('listaSoluciones');
+          const detalleSolucionContainer = document.getElementById('detalleSolucionContainer');
+          
+          if (listaSoluciones) listaSoluciones.innerHTML = '';
+          if (detalleSolucionContainer) detalleSolucionContainer.style.display = 'none';
+          
+          if (misionId) {
+            cargarIntentosMision(misionId);
+          }
+          
+          if (vistaProfesor) vistaProfesor.style.display = 'block';
+          if (vistaEstudiante) vistaEstudiante.style.display = 'none';
+        } else {
+          if (misionCard) {
+            const misionDescripcion = misionCard.querySelector('p')?.textContent || '';
+            const misionEstado = misionCard.querySelector('.badge')?.textContent.trim() || '';
+  
+            document.getElementById('misionTitulo').textContent = misionTitulo;
+            document.getElementById('misionDescripcion').textContent = misionDescripcion;
+            
+            const estadoBadge = document.getElementById('misionEstado');
+            if (estadoBadge) {
+              estadoBadge.textContent = misionEstado;
+              estadoBadge.className = 'badge ' + (misionEstado === 'Completada' ? 'bg-label-success' :
+                                                misionEstado === 'En progreso' ? 'bg-label-info' : 'bg-label-warning');
+            }
+
+          }
+          
+          if (vistaEstudiante) vistaEstudiante.style.display = 'block';
+          if (vistaProfesor) vistaProfesor.style.display = 'none';
+          
+          const respuestaInput = document.getElementById('respuestaMision');
+          const respuestaContainer = document.getElementById('respuestaContainer');
+          const btnConfirmar = document.getElementById('btnConfirmarRespuesta');
+          
+          if (respuestaInput) respuestaInput.value = '';
+          if (respuestaContainer) respuestaContainer.style.display = 'block';
+          if (btnConfirmar) btnConfirmar.style.display = 'block';
+        }
+      });
+    }
+
+    const btnConfirmar = document.getElementById('btnConfirmarRespuesta');
+    if (btnConfirmar) {
+      btnConfirmar.addEventListener('click', manejarConfirmarRespuesta);
+    }
+    
+    const cerrarDetalle = document.getElementById('cerrarDetalle');
+    if (cerrarDetalle) {
+      cerrarDetalle.addEventListener('click', function() {
+        const detalleSolucionContainer = document.getElementById('detalleSolucionContainer');
+        if (detalleSolucionContainer) {
+          detalleSolucionContainer.style.display = 'none';
+        }
+      });
+    }
+  });
+
+  async function manejarConfirmarRespuesta() {
+    const btnConfirmar = this;
+    const respuestaInput = document.getElementById('respuestaMision');
+    const respuesta = respuestaInput?.value.trim() || '';
+    const modal = bootstrap.Modal.getInstance(document.getElementById('misionDetalleModal'));
+    
+    if (!respuesta) {
+      const toast = new bootstrap.Toast(document.getElementById('toastError'));
+      document.querySelector('#toastError .toast-body').textContent = 'Por favor, escribe una respuesta antes de enviar.';
+      toast.show();
+      return;
+    }
+
+    const misionTitulo = document.getElementById('misionTitulo').textContent;
+    const misionId = document.querySelector(`.aceptar-mision[data-mision-titulo="${misionTitulo}"`)?.getAttribute('data-mision-id');
+
+    if (!misionId) {
+      console.error('No se pudo encontrar el ID de la misión');
+      return;
+    }
+
+    const originalText = btnConfirmar.innerHTML;
+    btnConfirmar.disabled = true;
+    btnConfirmar.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...';
+
+    try {
+      const csrftoken = getCookie('csrftoken');
+      const response = await fetch('/misiones/guardar-intento/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrftoken || ''
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({
+          mision_id: misionId,
+          solucion: respuesta,
+          estado: 'en_revision'
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Error HTTP: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.status === 'success') {
+        const toast = new bootstrap.Toast(document.getElementById('toastSuccess'));
+        document.querySelector('#toastSuccess .toast-body').textContent = '¡Respuesta enviada correctamente! El profesor revisará tu respuesta pronto.';
+        toast.show();
+
+        const estadoBadge = document.getElementById('misionEstado');
+        if (estadoBadge) {
+          estadoBadge.textContent = 'En revisión';
+          estadoBadge.className = 'badge bg-label-warning';
+        }
+
+        const misionCard = document.querySelector(`.mision-card[data-mision-id="${misionId}"]`);
+        if (misionCard) {
+          const estadoCard = misionCard.querySelector('.badge');
+          const botonMision = misionCard.querySelector('.aceptar-mision');
+          
+          if (estadoCard) {
+            estadoCard.textContent = 'En revisión';
+            estadoCard.className = 'badge bg-label-warning';
+          }
+          
+          if (botonMision) {
+            botonMision.innerHTML = `
+              <div class="bg-warning-subtle rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                <i class="ti ti-clock text-warning"></i>
+              </div>
+              En revisión
+            `;
+          }
+        }
+        const respuestaContainer = document.getElementById('respuestaContainer');
+        if (respuestaContainer) {
+          respuestaContainer.style.display = 'none';
+        }
+        btnConfirmar.style.display = 'none';
+        
+        setTimeout(() => {
+          if (modal) modal.hide();
+          
+          const misionActual = document.querySelector(`.mision-card[data-mision-id="${misionId}"]`);
+          if (misionActual) {
+            const siguienteElemento = misionActual.nextElementSibling;
+            
+            if (siguienteElemento && siguienteElemento.id === 'siguiente-mision') {
+              const siguienteMision = siguienteElemento.nextElementSibling;
+              
+              if (siguienteMision && siguienteMision.classList.contains('mision-card')) {
+                siguienteMision.style.display = 'block';
+                siguienteElemento.style.display = 'none';
+                
+                setTimeout(() => {
+                  siguienteMision.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 300);
+              }
+            }
+          }
+        }, 1500);
+      } else {
+        throw new Error(data.message || 'Error al guardar la respuesta');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      const toast = new bootstrap.Toast(document.getElementById('toastError'));
+      document.querySelector('#toastError .toast-body').textContent = 'Error al guardar la respuesta: ' + (error.message || 'Inténtalo de nuevo');
+      toast.show();
+    } finally {
+      btnConfirmar.disabled = false;
+      btnConfirmar.innerHTML = originalText;
+    }
+  }
+
+  function cargarIntentosMision(misionId) {
+    const listaSoluciones = document.getElementById('listaSoluciones');
+    const detalleSolucionContainer = document.getElementById('detalleSolucionContainer');
+    const btnAprobar = document.getElementById('btnAprobar');
+    const btnRechazar = document.getElementById('btnRechazar');
+    
+    if (!misionId || !listaSoluciones) return;
+
+    listaSoluciones.innerHTML = '<tr><td colspan="5" class="text-center">Cargando soluciones...</td></tr>';
+    
+    if (detalleSolucionContainer) {
+      detalleSolucionContainer.style.display = 'none';
+    }
+
+    fetch(`/misiones/api/misiones/${misionId}/intentos/`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`Error de red: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(intentos => {
+        listaSoluciones.innerHTML = '';
+
+        if (intentos.length === 0) {
+          listaSoluciones.innerHTML = '<tr><td colspan="5" class="text-center">No hay soluciones presentadas aún.</td></tr>';
+          return;
+        }
+
+        intentos.forEach(intento => {
+          const row = document.createElement('tr');
+          
+          const fechaIntento = new Date(intento.fecha_intento);
+          const fechaFormateada = fechaIntento.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          
+          let estadoClase = 'bg-label-warning';
+          let estadoTexto = 'Pendiente';
+          
+          if (intento.estado === 'completado') {
+            estadoClase = 'bg-label-success';
+            estadoTexto = 'Aprobado';
+          } else if (intento.estado === 'rechazado') {
+            estadoClase = 'bg-label-danger';
+            estadoTexto = 'Rechazado';
+          }
+          
+          const nombreUsr = intento.usuario_nombre || intento['usuario__nombre_usuario'] || 'Estudiante';
+          const uid = intento.usuario_id || intento['usuario__usuario_id'] || '';
+          const solucionTxt = intento.solucion_propuesta || 'No se proporcionó solución';
+          row.innerHTML = `
+            <td>${nombreUsr}</td>
+            <td>${solucionTxt || 'Sin solución'}</td>
+            <td><span class="badge ${estadoClase}">${estadoTexto}</span></td>
+            <td>${fechaFormateada}</td>
+            <td>
+              <button type="button" class="btn btn-sm btn-outline-primary ver-detalle" 
+                      data-intento-id="${intento.intento_id}"
+                      data-usuario-id="${uid}"
+                      data-estudiante="${nombreUsr}"
+                      data-solucion="${solucionTxt}"
+                      data-estado="${intento.estado || 'pendiente'}"
+                      data-fecha="${fechaFormateada}">
+                <i class="ti ti-eye me-1"></i> Revisar
+              </button>
+            </td>
+          `;
+          
+          listaSoluciones.appendChild(row);
+        });
+
+        document.querySelectorAll('.ver-detalle').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const intentoId = this.getAttribute('data-intento-id');
+            const usuarioId = this.getAttribute('data-usuario-id');
+            const estudiante = this.getAttribute('data-estudiante');
+            const solucion = this.getAttribute('data-solucion');
+            const estado = this.getAttribute('data-estado');
+            const fecha = this.getAttribute('data-fecha');
+            
+            const detalleSolucionContainer = document.getElementById('detalleSolucionContainer');
+            const nombreEstudiante = document.getElementById('nombreEstudiante');
+            const solucionDetalle = document.getElementById('solucionDetalle');
+            const estadoSolucion = document.getElementById('estadoSolucion');
+            const fechaSolucion = document.getElementById('fechaSolucion');
+            
+            if (nombreEstudiante && solucionDetalle && estadoSolucion && fechaSolucion) {
+              nombreEstudiante.textContent = estudiante;
+              solucionDetalle.textContent = solucion;
+              
+              estadoSolucion.textContent = estado === 'completado' ? 'Completado' : 
+                                          estado === 'rechazado' ? 'Rechazado' : 'Pendiente';
+              
+              estadoSolucion.className = 'badge ' + (
+                estado === 'completado' ? 'bg-label-success' :
+                estado === 'rechazado' ? 'bg-label-danger' : 'bg-label-warning'
+              );
+              
+              fechaSolucion.textContent = fecha;
+              
+              const btnAprobar = document.getElementById('btnAprobar');
+              const btnRechazar = document.getElementById('btnRechazar');
+              
+              if (btnAprobar && btnRechazar) {
+                const newBtnAprobar = btnAprobar.cloneNode(true);
+                const newBtnRechazar = btnRechazar.cloneNode(true);
+                
+                btnAprobar.parentNode.replaceChild(newBtnAprobar, btnAprobar);
+                btnRechazar.parentNode.replaceChild(newBtnRechazar, btnRechazar);
+                
+                newBtnAprobar.onclick = () => actualizarEstadoIntento(
+                  intentoId, 
+                  'completado', 
+                  estadoSolucion, 
+                  this.closest('tr')
+                );
+                
+                newBtnRechazar.onclick = () => actualizarEstadoIntento(
+                  intentoId, 
+                  'rechazado', 
+                  estadoSolucion, 
+                  this.closest('tr')
+                );
+              }
+              
+              if (detalleSolucionContainer) {
+                detalleSolucionContainer.style.display = 'block';
+                
+                detalleSolucionContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              }
+              
+              const misionIdModal = modalElement?.dataset?.misionId;
+              if (misionIdModal && usuarioId) {
+                loadPolyaEstudiante(misionIdModal, usuarioId, solucion);
+              }
+            }
+          });
+        });
+      })
+      .catch(error => {
+        console.error('Error al cargar los intentos:', error);
+        listaSoluciones.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center text-danger">
+              Error al cargar las soluciones. Intenta recargar la página.
+            </td>
+          </tr>
+        `;
+      });
+  }
+
+  async function actualizarEstadoIntento(intentoId, nuevoEstado, estadoBadgeElement, filaTabla) {
+    if (!intentoId) return;
+    
+    const estadoAnterior = estadoBadgeElement.textContent;
+    const estadoAnteriorClase = estadoBadgeElement.className;
+    
+    estadoBadgeElement.textContent = 'Guardando...';
+    estadoBadgeElement.className = 'badge bg-label-info';
+    
+    let estadoCelda = null;
+    if (filaTabla) {
+      estadoCelda = filaTabla.querySelector('td:nth-child(3) .badge');
+      if (estadoCelda) {
+        estadoCelda.textContent = 'Guardando...';
+        estadoCelda.className = 'badge bg-label-info';
+      }
+    }
+    
+    try {
+      const csrftoken = getCookie('csrftoken');
+      const response = await fetch(`/misiones/api/misiones/intentos/${intentoId}/`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrftoken || ''
+        },
+        body: JSON.stringify({ estado: nuevoEstado })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        const nuevoEstadoTexto = nuevoEstado === 'completado' ? 'Completado' : 'Rechazado';
+        const nuevaClase = nuevoEstado === 'completado' ? 'bg-label-success' : 'bg-label-danger';
+        
+        estadoBadgeElement.textContent = nuevoEstadoTexto;
+        estadoBadgeElement.className = `badge ${nuevaClase}`;
+        
+        if (estadoCelda) {
+          estadoCelda.textContent = nuevoEstadoTexto;
+          estadoCelda.className = `badge ${nuevaClase}`;
+        }
+        
+        const toast = new bootstrap.Toast(document.getElementById('toastSuccess'));
+        document.querySelector('#toastSuccess .toast-body').textContent = 
+          `Estado actualizado correctamente a: ${nuevoEstadoTexto}`;
+        toast.show();
+        
+        if (filaTabla) {
+          const btnVerDetalle = filaTabla.querySelector('.ver-detalle');
+          if (btnVerDetalle) {
+            btnVerDetalle.setAttribute('data-estado', nuevoEstado);
+          }
+        }
+      } else {
+        throw new Error(data.message || 'Error al actualizar el estado');
+      }
+    } catch (error) {
+      console.error('Error al actualizar el estado:', error);
+      
+      estadoBadgeElement.textContent = estadoAnterior;
+      estadoBadgeElement.className = estadoAnteriorClase;
+      
+      if (estadoCelda) {
+        estadoCelda.textContent = estadoAnterior;
+        estadoCelda.className = estadoAnteriorClase;
+      }
+      
+      const toast = new bootstrap.Toast(document.getElementById('toastError'));
+      document.querySelector('#toastError .toast-body').textContent = 
+        `Error al actualizar el estado: ${error.message || 'Inténtalo de nuevo'}`;
+      toast.show();
+    }
+  }
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  window.addEventListener('beforeunload', cleanupModal);
+</script> 
+{% endblock %}
+{% endblock %}

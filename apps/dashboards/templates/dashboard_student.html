@@ -1,0 +1,375 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Mi Progreso - Panel de Estudiante{% endblock title %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/apex-charts/apex-charts.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/apex-charts/apexcharts.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block content %}
+<div class="row gy-6">
+  <!-- Student Progress Overview -->
+  <div class="col-md-12 col-lg-4">
+    <div class="card h-100">
+      <div class="card-body text-center">
+        <div class="avatar avatar-xl mb-3">
+          <img src="{% static 'img/avatars/1.png' %}" alt="Avatar" class="rounded-circle">
+        </div>
+        <h5 class="card-title mb-1">¡Bienvenido de nuevo!</h5>
+        <p class="text-muted mb-3">Estudiante</p>
+        
+        <div class="d-flex justify-content-between mb-3">
+          <div class="text-center">
+            <h4 class="mb-0">{{ misiones_totales }}</h4>
+            <small class="text-muted">Misiones</small>
+          </div>
+          <div class="text-center">
+            <h4 class="mb-0">{{ misiones_completadas }}</h4>
+            <small class="text-muted">Completadas</small>
+          </div>
+          <div class="text-center">
+            <h4 class="mb-0">{{ misiones_en_progreso }}</h4>
+            <small class="text-muted">En progreso</small>
+          </div>
+        </div>
+        
+        <div class="progress mb-3" style="height: 10px;">
+          <div class="progress-bar bg-success" role="progressbar" style="width: 65%;" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <p class="mb-0">65% de progreso total</p>
+        <a href="{% url 'misiones:misiones' %}" class="btn btn-primary mt-3">Ver mis misiones</a>
+      </div>
+    </div>
+  </div>
+  <!--/ Student Progress Overview -->
+
+  <!-- Learning Progress -->
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="card-title m-0 me-2">Mi Progreso de Aprendizaje</h5>
+          <div class="dropdown">
+            <button class="btn text-body-secondary p-0" type="button" id="progressDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="icon-base ri ri-more-2-line icon-24px"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="progressDropdown">
+              <a class="dropdown-item" href="{% url 'mapa_progreso' %}">Ver progreso detallado</a>
+              <a class="dropdown-item" href="#">Exportar reporte</a>
+            </div>
+          </div>
+        </div>
+        <p class="small mb-0"><span class="h6 mb-0">65% de progreso total</span> 📈 esta semana</p>
+      </div>
+      <div class="card-body pt-lg-10">
+        <div class="row g-6">
+          <div class="col-6 col-sm-3">
+            <div class="d-flex align-items-center">
+              <div class="avatar">
+                <div class="avatar-initial bg-primary rounded shadow-xs">
+                  <i class="icon-base ri ri-medal-line icon-24px"></i>
+                </div>
+              </div>
+              <div class="ms-3">
+                <p class="mb-0">Puntuación</p>
+                <h5 class="mb-0">8.7/10</h5>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-sm-3">
+            <div class="d-flex align-items-center">
+              <div class="avatar">
+                <div class="avatar-initial bg-success rounded shadow-xs">
+                  <i class="icon-base ri ri-time-line icon-24px"></i>
+                </div>
+              </div>
+              <div class="ms-3">
+                <p class="mb-0">Tiempo</p>
+                <h5 class="mb-0">24h 30m</h5>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-sm-3">
+            <div class="d-flex align-items-center">
+              <div class="avatar">
+                <div class="avatar-initial bg-warning rounded shadow-xs">
+                  <i class="icon-base ri ri-book-mark-line icon-24px"></i>
+                </div>
+              </div>
+              <div class="ms-3">
+                <p class="mb-0">Lecciones</p>
+                <h5 class="mb-0">15/20</h5>
+              </div>
+            </div>
+          </div>
+          <div class="col-6 col-sm-3">
+            <div class="d-flex align-items-center">
+              <div class="avatar">
+                <div class="avatar-initial bg-info rounded shadow-xs">
+                  <i class="icon-base ri ri-star-line icon-24px"></i>
+                </div>
+              </div>
+              <div class="ms-3">
+                <p class="mb-0">Logros</p>
+                <h5 class="mb-0">8</h5>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4">
+          <div id="learningProgressChart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--/ Learning Progress -->
+
+  <!-- Mission Progress -->
+  <div class="col-xl-4 col-md-6">
+    <div class="card h-100">
+      <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <h5 class="mb-1">Mis Misiones</h5>
+          <a href="{% url 'misiones:misiones' %}" class="btn btn-sm btn-outline-primary">Ver todas</a>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="missionProgressChart"></div>
+        <div class="mt-4">
+          <div class="d-flex justify-content-between mb-2">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-success rounded-circle p-1 me-2"></span>
+              <span>Completadas: {{ misiones_completadas }}</span>
+            </div>
+            <span class="text-muted">{{ porcentaje_total }}%</span>
+          </div>
+          <div class="progress mb-3" style="height: 10px;">
+            <div class="progress-bar bg-success" role="progressbar" style="width: {{ porcentaje_total }}%;" aria-valuenow="{{ porcentaje_total }}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+          
+          <div class="d-flex justify-content-between mb-2">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-warning rounded-circle p-1 me-2"></span>
+              <span>En progreso: {{ misiones_en_progreso }}</span>
+            </div>
+            <span class="text-muted">{{ porcentaje_en_progreso }}%</span>
+          </div>
+          <div class="progress mb-3" style="height: 10px;">
+            <div class="progress-bar bg-warning" role="progressbar" style="width: {{ porcentaje_en_progreso }}%;" aria-valuenow="{{ porcentaje_en_progreso }}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+          
+          <div class="d-flex justify-content-between mb-2">
+            <div class="d-flex align-items-center">
+              <span class="badge bg-secondary rounded-circle p-1 me-2"></span>
+              <span>Pendientes: {{ misiones_en_progreso }}</span>
+            </div>
+            <span class="text-muted">{{ porcentaje_pendientes }}%</span>
+          </div>
+          <div class="progress mb-2" style="height: 10px;">
+            <div class="progress-bar bg-secondary" role="progressbar" style="width: {{ porcentaje_pendientes }}%;" aria-valuenow="{{ porcentaje_pendientes }}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--/ Mission Progress -->
+
+  <!-- Skills -->
+  <div class="col-xl-4 col-md-6">
+    <div class="card h-100">
+      <div class="card-header d-flex align-items-center justify-content-between">
+        <h5 class="card-title m-0 me-2">Mis Habilidades</h5>
+        <div class="dropdown">
+          <button class="btn text-body-secondary p-0" type="button" id="skillsDropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="icon-base ri ri-more-2-line icon-24px"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="skillsDropdown">
+            <a class="dropdown-item" href="#">Ver todas las habilidades</a>
+            <a class="dropdown-item" href="#">Obtener certificado</a>
+          </div>
+        </div>
+      </div>
+      <div class="card-body pt-lg-4">
+        <div class="mb-4">
+          <div class="d-flex align-items-center mb-3">
+            <h3 class="mb-0">{{ total_habilidades }}</h3>
+            <span class="text-success ms-2">
+              <i class="icon-base ri ri-arrow-up-s-line icon-sm"></i>
+              <span>{{ porcentaje_habilidades }}%</span>
+            </span>
+          </div> 
+        </div>
+        <div class="mt-4">
+          <h6 class="mb-3">Mis Habilidades</h6>
+          <div class="d-flex flex-column gap-2">
+            {% for habilidad in habilidades_usuario %}
+            <div class="d-flex align-items-center justify-content-between py-2">
+              <div class="d-flex align-items-center">
+                {% if habilidad.tiene_habilidad %}
+                <i class="ri-checkbox-circle-fill text-success me-2"></i>
+                {% else %}
+                <i class="ri-checkbox-blank-circle-line text-muted me-2"></i>
+                {% endif %}
+                <span>{{ habilidad.nombre }}</span>
+              </div>
+              {% if habilidad.tiene_habilidad %}
+              <span class="badge bg-label-success">Habilidad Obtenida</span>
+              {% endif %}
+            </div>
+            {% if not forloop.last %}<hr class="my-1">{% endif %}
+            {% empty %}
+            <p class="text-muted">Aún no has adquirido habilidades. ¡Completa misiones para desbloquearlas!</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div> 
+</div>
+
+<!-- JavaScript for charts -->
+{% block page_js %}
+<script>
+  // Learning Progress Chart
+  var learningProgressChartOptions = {
+    chart: {
+      height: 220,
+      type: 'radialBar',
+      parentHeightOffset: 0,
+      toolbar: {
+        show: false
+      }
+    },
+    series: [65],
+    plotOptions: {
+      radialBar: {
+        startAngle: -90,
+        endAngle: 90,
+        hollow: {
+          size: '60%',
+        },
+        track: {
+          background: '#f5f5f5',
+          strokeWidth: '97%',
+          margin: 5,
+        },
+        dataLabels: {
+          name: {
+            show: false
+          },
+          value: {
+            offsetY: -2,
+            fontSize: '22px',
+            fontWeight: '600',
+            formatter: function(val) {
+              return val + '%';
+            }
+          }
+        }
+      }
+    },
+    fill: {
+      type: 'gradient',
+      gradient: {
+        shade: 'dark',
+        type: 'horizontal',
+        shadeIntensity: 0.5,
+        gradientToColors: ['#00db89'],
+        inverseColors: true,
+        opacityFrom: 1,
+        opacityTo: 1,
+        stops: [0, 100]
+      },
+    },
+    stroke: {
+      lineCap: 'round',
+    },
+    labels: ['Progreso'],
+    colors: ['#5e72e4']
+  };
+
+  var learningProgressChart = new ApexCharts(
+    document.querySelector("#learningProgressChart"),
+    learningProgressChartOptions
+  );
+  learningProgressChart.render();
+
+  // Mission Progress Chart
+  var missionProgressChartOptions = {
+    chart: {
+      height: 200,
+      type: 'radialBar',
+    },
+    plotOptions: {
+      radialBar: {
+        offsetY: 0,
+        startAngle: 0,
+        endAngle: 270,
+        hollow: {
+          margin: 5,
+          size: '30%',
+          background: 'transparent',
+        },
+        track: {
+          show: false,
+        },
+        dataLabels: {
+          name: {
+            show: false,
+          },
+          value: {
+            show: false,
+          }
+        }
+      }
+    },
+    colors: ['#2dce89', '#ffd600', '#f5365c'],
+    series: [65, 25, 10],
+    labels: ['Completadas', 'En progreso', 'Pendientes'],
+    legend: {
+      show: true,
+      floating: true,
+      fontSize: '14px',
+      position: 'left',
+      offsetX: 10,
+      offsetY: 10,
+      labels: {
+        useSeriesColors: true,
+      },
+      markers: {
+        size: 0
+      },
+      formatter: function(seriesName, opts) {
+        return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex] + "%";
+      },
+      itemMargin: {
+        vertical: 3
+      }
+    },
+    responsive: [{
+      breakpoint: 480,
+      options: {
+        legend: {
+          show: false
+        }
+      }
+    }]
+  };
+
+  var missionProgressChart = new ApexCharts(
+    document.querySelector("#missionProgressChart"),
+    missionProgressChartOptions
+  );
+  missionProgressChart.render();
+</script>
+{% endblock page_js %}
+{% endblock content %}

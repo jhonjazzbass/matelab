@@ -1,0 +1,268 @@
+{% extends 'layout/master.html' %}
+
+{% block title %}Mapa de Progreso{% endblock %}
+
+{% block layout %}
+<!-- Layout wrapper: Start -->
+<div class="layout-wrapper layout-content-navbar">
+  <div class="layout-container">
+    <!-- Menu: Start -->
+    {% include 'layout/partials/menu/vertical/student_menu.html' %}
+    <!-- Menu: End -->
+
+    <!-- Layout page: Start -->
+    <div class="layout-page">
+      <!-- Navbar: Start -->
+      {% include 'layout/partials/navbar/navbar.html' %}
+      <!-- Navbar: End -->
+
+      <!-- Content wrapper: Start -->
+      <div class="content-wrapper">
+        <!-- Content: Start -->
+        <div class="container-xxl flex-grow-1 container-p-y">
+          <!-- Header -->
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold mb-0">Mapa de Progreso</h2> 
+          </div>
+
+          <!-- Progress Map -->
+          <!-- Progress Bar -->
+<div class="progress mb-5" style="height: 6px;">
+    <div class="progress-bar bg-primary" role="progressbar" 
+         style="width: {{ porcentaje_total }}%;" 
+         aria-valuenow="{{ porcentaje_total }}" 
+         aria-valuemin="0" 
+         aria-valuemax="100"></div>
+</div>
+
+<!-- Progress Summary -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-2">Progreso General</h5>
+                <p class="mb-3">{{ misiones_completadas }} de {{ total_misiones }} misiones completadas</p>
+                <div class="progress" style="height: 10px;">
+                    <div class="progress-bar bg-primary" role="progressbar" 
+                         style="width: {{ porcentaje_total }}%;" 
+                         aria-valuenow="{{ porcentaje_total }}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100"></div>
+                </div>
+                <p class="mt-2 mb-0 text-end">{{ porcentaje_total }}% Completado</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Skills Progress -->
+{% for progreso in progreso_habilidades %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{{ progreso.habilidad.nombre }}</h5>
+        <span class="badge {% if progreso.porcentaje_completado == 100 %}bg-success{% else %}bg-primary{% endif %}">
+            {{ progreso.porcentaje_completado }}% Completado
+        </span>
+    </div>
+    <div class="card-body">
+        <div class="progress mb-3" style="height: 6px;">
+            <div class="progress-bar {% if progreso.porcentaje_completado == 100 %}bg-success{% else %}bg-primary{% endif %}" 
+                 role="progressbar" 
+                 style="width: {{ progreso.porcentaje_completado }}%;" 
+                 aria-valuenow="{{ progreso.porcentaje_completado }}" 
+                 aria-valuemin="0" 
+                 aria-valuemax="100"></div>
+        </div>
+        
+        <div class="row">
+            {% for mision in progreso.misiones %}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card h-100 {% if mision.esta_completada %}border-success{% endif %}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-2">
+                                    <span class="avatar-initial {% if mision.esta_completada %}bg-success{% else %}bg-secondary{% endif %} rounded">
+                                        <i class="ti ti-{% if mision.esta_completada %}check{% else %}lock{% endif %}"></i>
+                                    </span>
+                                </div>
+                                <h6 class="mb-0">{{ mision.titulo }}</h6>
+                            </div>
+                            <span class="badge {% if mision.esta_completada %}bg-success{% else %}bg-secondary{% endif %}">
+                                {% if mision.esta_completada %}Completado{% else %}Pendiente{% endif %}
+                            </span>
+                        </div>
+                        {% if mision.descripcion %}
+                        <p class="text-muted small mb-0">{{ mision.descripcion|truncatechars:100 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+          <!-- Current Level: Fundamentos -->
+       <!-- Current Level: Fundamentos -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Tus Misiones</h5>
+        <span class="badge bg-label-primary">{{ misiones|length }} misiones</span>
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            {% for mision in misiones %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 {% if mision.estado == 'completado' %}border-success{% elif mision.estado == 'rechazado' %}border-danger{% else %}border-primary{% endif %}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar me-3">
+                                    <span class="avatar-initial bg-{% if mision.estado == 'completado' %}label-success{% elif mision.estado == 'rechazado' %}label-danger{% else %}label-primary{% endif %} rounded">
+                                        <i class="ti ti-{% if mision.estado == 'completado' %}check{% elif mision.estado == 'rechazado' %}x{% else %}clock{% endif %}"></i>
+                                    </span>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">{{ mision.titulo }}</h6>
+                                    {% if mision.ultimo_intento %}
+                                    <small class="text-muted">Último intento: {{ mision.ultimo_intento.fecha_intento|date:"d/m/Y H:i" }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <span class="badge bg-{% if mision.estado == 'completado' %}success{% elif mision.estado == 'rechazado' %}danger{% else %}primary{% endif %}">
+                                {% if mision.estado == 'completado' %}Completado
+                                {% elif mision.estado == 'en_progreso' %}En progreso
+                                {% elif mision.estado == 'rechazado' %}Rechazado
+                                {% else %}No iniciada{% endif %}
+                            </span>
+                        </div>
+                        {% if mision.descripcion %}
+                        <p class="mb-0">{{ mision.descripcion|truncatechars:100 }}</p>
+                        {% endif %}
+                        {% if mision.estado == 'en_progreso' and mision.ultimo_intento %}
+                        <div class="progress mt-3" style="height: 6px;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: {% if mision.ultimo_intento.porcentaje_completado %}{{ mision.ultimo_intento.porcentaje_completado }}%{% else %}0%{% endif %};" 
+                                 aria-valuenow="{% if mision.ultimo_intento.porcentaje_completado %}{{ mision.ultimo_intento.porcentaje_completado }}{% else %}0{% endif %}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100"></div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+        </div>
+        <!-- / Content -->
+      </div>
+      <!-- / Content wrapper: End -->
+    </div>
+    <!-- / Layout page: End -->
+  </div>
+</div>
+<!-- / Layout wrapper: End -->
+
+{% endblock %}
+
+{% block page_css %}
+<style>
+  .progress-map {
+    position: relative;
+    padding: 2rem 0;
+  }
+  
+  .step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+    position: relative;
+    text-align: center;
+    flex: 1;
+  }
+  
+  .step-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #fff;
+    border: 3px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: #6c757d;
+    position: relative;
+    z-index: 2;
+  }
+  
+  .step.completed .step-circle {
+    border-color: #71dd37;
+    background-color: #e8fadf;
+    color: #71dd37;
+  }
+  
+  .step.active .step-circle {
+    border-color: #696cff;
+    background-color: #e7e7ff;
+    color: #696cff;
+    transform: scale(1.1);
+    box-shadow: 0 0 0 5px rgba(105, 108, 255, 0.1);
+  }
+  
+  .step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background-color: #e9ecef;
+    z-index: 1;
+  }
+  
+  .step.completed:not(:last-child)::after {
+    background-color: #71dd37;
+  }
+  
+  .step-label {
+    margin-top: 0.5rem;
+  }
+  
+  .progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    margin: 2.5rem 0;
+  }
+  
+  .card {
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  .border-primary {
+    border: 1px solid #696cff !important;
+  }
+</style>
+{% endblock %}
+
+{% block page_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Add any JavaScript interactions here
+    console.log('Progress map loaded');
+  });
+</script>
+{% endblock %}

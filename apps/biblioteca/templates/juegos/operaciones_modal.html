@@ -1,0 +1,92 @@
+
+{% block content %}
+<div class="container mt-3">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">{{ titulo }}</h3>
+                    <div id="timer" class="badge bg-white text-primary fs-6"><span id="time-display">30</span>s</div>
+                </div>
+                <div class="card-body p-4"> 
+                    <div id="question-container">
+                        <div class="question mb-4">
+                            <h4>{{ pregunta.pregunta }}</h4>
+                            <div class="options mt-4">
+                                {% for opcion in pregunta.opciones %}
+                                <button class="option-btn" onclick="checkAnswer({{ forloop.counter0 }}, {{ pregunta.respuesta_correcta }})">
+                                    {{ opcion }}
+                                </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="feedback" class="my-3 text-center"></div>
+                    <div class="text-center">
+                        <button id="restart-btn" class="btn btn-primary" onclick="restartGame()" style="display: none;">Jugar de nuevo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .option-btn {
+        display: block;
+        width: 100%;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        font-size: 1.1rem;
+        text-align: center;
+        border: 2px solid #e2e8f0;
+        border-radius: 0.5rem;
+        background: white;
+        transition: all 0.2s;
+    }
+    
+    .option-btn:hover:not(:disabled) {
+        background-color: #f7fafc;
+        border-color: #cbd5e0;
+        transform: translateY(-1px);
+    }
+    
+    .option-btn.correct {
+        background-color: #c6f6d5;
+        border-color: #48bb78;
+        color: #22543d;
+    }
+    
+    .option-btn.incorrect {
+        background-color: #fed7d7;
+        border-color: #f56565;
+        color: #742a2a;
+    }
+    
+    .option-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.8;
+    }
+    
+    #feedback {
+        font-size: 1.2rem;
+        min-height: 2rem;
+        margin: 1.5rem 0;
+        font-weight: 500;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+</style>
+
+
+<!-- Add this script at the bottom of the file, before the closing </body> tag -->
+<script>
+   
+</script>
+
+{% endblock %}

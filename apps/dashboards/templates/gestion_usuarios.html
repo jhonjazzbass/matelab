@@ -1,0 +1,534 @@
+{% extends layout_path %}
+
+{% load static %}
+{% load i18n %}
+
+{% block title %}Gestión de Usuarios{% endblock title %}
+
+{% block vendor_css %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'vendor/libs/datatables/datatables.css' %}" />
+<link rel="stylesheet" href="{% static 'vendor/libs/select2/select2.css' %}" />
+{% endblock vendor_css %}
+
+{% block vendor_js %}
+{{ block.super }}
+<script src="{% static 'vendor/libs/datatables/datatables.js' %}"></script>
+<script src="{% static 'vendor/libs/select2/select2.js' %}"></script>
+{% endblock vendor_js %}
+
+{% block content %}  
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Lista de Usuarios</h5>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addNewUser">
+          <i class="icon-base ri-user-add-line me-1"></i> Nuevo Usuario
+        </button>
+      </div>
+      <div class="card-body">
+<form method="get" id="filtroForm">
+          <div class="row mb-4">
+            <div class="col-md-4">
+              <div class="input-group input-group-merge">
+                <span class="input-group-text"><i class="icon-base ri-search-line"></i></span>
+                <input type="text" class="form-control" name="buscar" value="{{ request.GET.buscar }}" placeholder="Buscar usuario...">
+              </div>
+            </div>
+            <div class="col-md-3">
+              <select class="form-select" name="rol" onchange="this.form.submit()">
+                <option value="">Todos los roles</option>
+                {% for rol in roles %}
+                <option value="{{ rol.rol_id }}" {% if request.GET.rol|default:'' == rol.rol_id|stringformat:'s' %}selected{% endif %}>
+                  {{ rol.nombre }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-3">
+              <select class="form-select" name="estado" onchange="this.form.submit()">
+                <option value="">Todos los estados</option>
+                <option value="1" {% if request.GET.estado == '1' %}selected{% endif %}>Activo</option>
+                <option value="0" {% if request.GET.estado == '0' %}selected{% endif %}>Inactivo</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <a href="?" class="btn btn-outline-secondary w-100">
+                <i class="icon-base ri-refresh-line me-1"></i> Limpiar
+              </a>
+            </div>
+          </div>
+        </form>
+
+        <div class="table-responsive">
+          <table class="table table-hover" id="usersTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Usuario</th> 
+                <th>Rol</th>
+                <th>Estado</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for usuario in usuarios %}
+              <tr>
+                <td>{{ usuario.id }}</td>
+                <td>{{ usuario.username }}</td> 
+                <td>{{ usuario.rol }}</td>
+                <td>
+                  <span class="badge bg-{% if usuario.estado %}success{% else %}danger{% endif %}">
+                    {% if usuario.estado %}Activo{% else %}Inactivo{% endif %}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <div class="d-flex justify-content-center">
+                    <button type="button" class="btn btn-icon btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#editUserModal" 
+                      data-user-id="{{ usuario.id }}"
+                      data-username="{{ usuario.username }}"
+                      data-rol="{{ usuario.rol_id }}"
+                      data-estado="{{ usuario.estado|yesno:'1,0' }}"
+                      title="Editar usuario">
+                      <i class="menu-icon icon-base ri ri-edit-line"></i>
+                    </button>
+                    <button type="button" class="btn btn-icon btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal" 
+                      data-user-id="{{ usuario.id }}"
+                      data-username="{{ usuario.username }}"
+                      title="Eliminar usuario">
+                    <i class="menu-icon icon-base ri ri-delete-bin-line"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+              <!-- More user rows can be added here -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-between mt-4">
+          <div class="text-muted">
+            Mostrando <span class="fw-semibold">1</span> a <span class="fw-semibold">10</span> de <span class="fw-semibold">24</span> entradas
+          </div>
+          <nav aria-label="Page navigation">
+            <ul class="pagination mb-0">
+              <li class="page-item disabled">
+                <a class="page-link" href="#" tabindex="-1">Anterior</a>
+              </li>
+              <li class="page-item active"><a class="page-link" href="#">1</a></li>
+              <li class="page-item"><a class="page-link" href="#">2</a></li>
+              <li class="page-item"><a class="page-link" href="#">3</a></li>
+              <li class="page-item">
+                <a class="page-link" href="#">Siguiente</a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="editUserForm" method="post" action="{% url 'editar_usuario' %}">
+        {% csrf_token %}
+        <input type="hidden" name="user_id" id="edit_user_id">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="edit_username" class="form-label">Nombre de usuario</label>
+            <input type="text" class="form-control" id="edit_username" name="username" required>
+          </div>
+          <div class="mb-3">
+            <label for="edit_rol" class="form-label">Rol</label>
+            <select class="form-select" id="edit_rol" name="rol" required>
+              {% for rol in roles %}
+              <option value="{{ rol.rol_id }}">{{ rol.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="edit_estado" name="estado">
+              <label class="form-check-label" for="edit_estado">Usuario activo</label>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete User Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirmar eliminación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="deleteUserForm" method="post" action="{% url 'eliminar_usuario' %}">
+        {% csrf_token %}
+        <input type="hidden" name="user_id" id="delete_user_id">
+        <div class="modal-body">
+          <p>¿Está seguro que desea eliminar al usuario <strong id="delete_username"></strong>?</p>
+          <p class="text-danger">Esta acción no se puede deshacer.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger">Eliminar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+ 
+<!-- Add New User Modal -->
+<div class="modal fade" id="addNewUser" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Agregar Nuevo Usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="addUserForm" method="post" action="{% url 'crear-usuario' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-12">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Nombre de Usuario</label>
+                  <input type="text" name="nombre_usuario" class="form-control" placeholder="Ingrese el nombre de usuario" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Contraseña</label>
+                  <input type="password" name="password" class="form-control" placeholder="Ingrese la contraseña" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Confirmar Contraseña</label>
+                  <input type="password" name="confirm_password" class="form-control" placeholder="Confirme la contraseña" required>
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label">Rol</label>
+                  <select name="rol" class="form-select" required>
+                    <option value="">Seleccione un rol</option>
+                    {% for rol in roles %}
+                    <option value="{{ rol.rol_id }}">{{ rol.nombre }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label d-block">Estado</label>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="estado" id="estado_activo" value="1" checked>
+                    <label class="form-check-label" for="estado_activo">Activo</label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="estado" id="estado_inactivo" value="0">
+                    <label class="form-check-label" for="estado_inactivo">Inactivo</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-label-secondary" data-bs-dismiss="modal">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="icon-base ri-save-line me-1"></i> Guardar Usuario
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+  // Inicializar DataTable con configuración personalizada
+  $(document).ready(function() {
+    const table = $('#usersTable').DataTable({
+      responsive: true,
+      ordering: true,
+      order: [[0, 'desc']],
+      dom: '<"d-flex justify-content-between align-items-center mb-3"f<"ms-2"l>>rt<"d-flex justify-content-between align-items-center"ip>',
+      language: {
+        search: "",
+        searchPlaceholder: "Buscar...",
+        lengthMenu: "Mostrar _MENU_ registros",
+        info: "Mostrando _START_ a _END_ de _TOTAL_ usuarios",
+        paginate: {
+          previous: "<i class='icon-base ri-arrow-left-s-line'></i>",
+          next: "<i class='icon-base ri-arrow-right-s-line'></i>"
+        }
+      }
+    });
+
+    // Inicializar Select2
+    $('.select2').select2({
+      placeholder: 'Seleccionar',
+      width: '100%',
+      theme: 'bootstrap-5'
+    });
+  });
+
+  // Función para ver los detalles de un usuario
+  function verUsuario(usuarioId) {
+    console.log('Ver usuario:', usuarioId);
+  }
+
+  // Función para editar un usuario
+  function editarUsuario(usuarioId) {
+    console.log('Editar usuario:', usuarioId);
+  }
+
+  // Función para cambiar el estado de un usuario
+  function cambiarEstadoUsuario(usuarioId, estaActivo) {
+    if (confirm(`¿Está seguro de que desea ${estaActivo ? 'desactivar' : 'activar'} este usuario?`)) {
+      const csrftoken = getCookie('csrftoken');
+
+      fetch(`/api/usuarios/${usuarioId}/cambiar-estado/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({
+          esta_activo: !estaActivo
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          window.location.reload();
+        } else {
+          alert('Error al actualizar el estado del usuario');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error al conectar con el servidor');
+      });
+    }
+  }
+
+  // Función auxiliar para obtener el token CSRF
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  // Handle edit user modal
+  $('#editUserModal').on('show.bs.modal', function (event) {
+    const button = $(event.relatedTarget);
+    const userId = button.data('user-id');
+    const username = button.data('username');
+    const rol = button.data('rol');
+    const estado = button.data('estado') === '1';
+
+    const modal = $(this);
+    modal.find('#edit_user_id').val(userId);
+    modal.find('#edit_username').val(username);
+    modal.find('#edit_rol').val(rol);
+    modal.find('#edit_estado').prop('checked', estado);
+  });
+
+  // Handle delete user modal
+  $('#deleteUserModal').on('show.bs.modal', function (event) {
+    const button = $(event.relatedTarget);
+    const userId = button.data('user-id');
+    const username = button.data('username');
+
+    const modal = $(this);
+    modal.find('#delete_user_id').val(userId);
+    modal.find('#delete_username').text(username);
+  });
+
+  // Handle edit form submission
+  $('#editUserForm').on('submit', function(e) {
+    e.preventDefault();
+    const formData = $(this).serialize();
+
+    $.ajax({
+      type: 'POST',
+      url: $(this).attr('action'),
+      data: formData,
+      success: function(response) {
+        if (response.success) {
+          $('#editUserModal').modal('hide');
+          location.reload(); // Recarga para ver cambios
+        } else {
+          alert('Error al actualizar el usuario: ' + (response.error || 'Error desconocido'));
+        }
+      },
+      error: function() {
+        alert('Error de conexión. Por favor intente nuevamente.');
+      }
+    });
+  });
+
+  // Handle delete form submission
+  $('#deleteUserForm').on('submit', function(e) {
+    e.preventDefault();
+    if (!confirm('¿Está seguro que desea eliminar este usuario? Esta acción no se puede deshacer.')) {
+      return false;
+    }
+
+    const formData = $(this).serialize();
+
+    $.ajax({
+      type: 'POST',
+      url: $(this).attr('action'),
+      data: formData,
+      success: function(response) {
+        if (response.success) {
+          $('#deleteUserModal').modal('hide');
+          location.reload(); // Recarga para ver cambios
+        } else {
+          alert('Error al eliminar el usuario: ' + (response.error || 'Error desconocido'));
+        }
+      },
+      error: function() {
+        alert('Error de conexión. Por favor intente nuevamente.');
+      }
+    });
+  });
+
+  // Handle filter form submission
+  $('#filtroForm').on('submit', function(e) {
+    e.preventDefault();
+    const formData = $(this).serialize();
+    window.location.href = '?' + formData;
+  });
+
+  // Initialize all toasts
+  const toastElList = [].slice.call(document.querySelectorAll('.toast'));
+  const toastList = toastElList.map(function(toastEl) {
+    return new bootstrap.Toast(toastEl, {
+      autohide: true,
+      delay: 3000
+    });
+  });
+
+  // Show toast function
+  function showToast(type, message) {
+    const toastEl = document.getElementById(`toast${type}`);
+    const toastBody = toastEl.querySelector('.toast-body');
+    const toastBodyText = toastEl.querySelector(`#toast${type}Message`); // Usar span para el mensaje
+
+    // Actualiza el mensaje dentro del span
+    if (toastBodyText) {
+        toastBodyText.textContent = message;
+    } else {
+        // Si no hay span, actualiza directamente el body
+        toastBody.textContent = message;
+    }
+
+    const toast = bootstrap.Toast.getOrCreateInstance(toastEl);
+    toast.show();
+  }
+
+  // Handle add user form submission
+  $('#addUserForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    // Validar que las contraseñas coincidan
+    const password = $('input[name="password"]').val();
+    const confirmPassword = $('input[name="confirm_password"]').val();
+    
+    if (password !== confirmPassword) {
+      const alert = `
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          Las contraseñas no coinciden
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      `;
+      $('.content-wrapper').prepend(alert);
+      return false;
+    }
+
+    // Mostrar indicador de carga
+    const submitButton = $(this).find('button[type="submit"]');
+    const originalButtonText = submitButton.html();
+    submitButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...');
+
+    // Enviar datos por AJAX
+    $.ajax({
+      type: 'POST',
+      url: $(this).attr('action'),
+      data: $(this).serialize(),
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      success: function(response) {
+             // Cerrar el modal
+          $('#addNewUser').modal('hide');
+          
+          // Mostrar mensaje de éxito
+          const alert = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+              ${response.message || 'Usuario creado correctamente'}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          `;
+          $('.content-wrapper').prepend(alert);
+          
+          // Recargar la página después de 1.5 segundos
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+      },
+      error: function(xhr) {
+        let errorMessage = 'Error de conexión. Por favor intente nuevamente.';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMessage = xhr.responseJSON.message;
+        } else if (xhr.status === 400) {
+          errorMessage = 'Error en los datos del formulario. Por favor verifique la información.';
+        }
+        
+        const alert = `
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            ${errorMessage}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        `;
+        $('.content-wrapper').prepend(alert);
+        showToast('Error', errorMessage);
+      },
+      complete: function() { // Se ejecuta siempre, haya éxito o error
+        // Habilita el botón de nuevo y restaura el texto
+        submitButton.prop('disabled', false).html(originalButtonText);
+      }
+    });
+  });
+</script>
+{% endblock %}

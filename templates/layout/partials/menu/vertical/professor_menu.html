@@ -1,0 +1,44 @@
+{% block professor_menu %}
+<aside id="layout-menu" class="layout-menu menu-vertical menu">
+  {% if not navbar_full %}
+  <div class="app-brand demo">
+    <a href="{% url 'index' %}" class="app-brand-link">
+      <span class="app-brand-logo demo me-1">
+        {% include 'partials/logo.html' %}
+      </span>
+      <span class="app-brand-text demo menu-text fw-semibold ms-2">{% get_theme_variables 'template_name' %}</span>
+    </a>
+  </div>
+  {% endif %}
+
+  <div class="menu-inner-shadow"></div>
+
+  <ul class="menu-inner py-1"> 
+     <li class="menu-item {% if request.resolver_match.url_name == 'misiones' %}active{% endif %}">
+      <a href="{% url 'misiones:misiones' %}" class="menu-link">
+        <i class="menu-icon icon-base ri ri-rocket-line"></i>
+        <div class="text-truncate">Misiones</div>
+      </a>
+    </li>
+      <li class="menu-item {% if 'gestion-biblioteca' in request.path %}active{% endif %}">
+      <a href="{% url 'gestion-biblioteca' %}" class="menu-link">
+        <i class="menu-icon icon-base ri ri-book-2-line"></i>
+        <div class="text-truncate">Gestión de Biblioteca</div>
+      </a>
+    </li>
+      <li class="menu-item {% if 'reportes-estudiantes' in request.path %}active{% endif %}">
+      <a href="{% url 'reportes-estudiantes' %}" class="menu-link">
+        <i class="menu-icon icon-base ri ri-bar-chart-line"></i>
+        <div class="text-truncate">Reportes de Estudiantes</div>
+      </a>
+    </li>
+    <li class="menu-divider"></li>
+    <li class="menu-item">
+      <a href="{% url 'auth-login-basic' %}" class="menu-link">
+        <i class="menu-icon icon-base ri ri-logout-box-r-line"></i>
+        <div class="text-truncate">Salir</div>
+      </a>
+    </li>
+  </ul>
+</aside>
+{% endblock %}
