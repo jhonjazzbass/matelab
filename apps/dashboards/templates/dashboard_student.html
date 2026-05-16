@@ -43,9 +43,9 @@
         </div>
         
         <div class="progress mb-3" style="height: 10px;">
-          <div class="progress-bar bg-success" role="progressbar" style="width: 65%;" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
+          <div class="progress-bar bg-success" role="progressbar" style="width: {{ porcentaje_completado }}%;" aria-valuenow="{{ porcentaje_completado }}" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
-        <p class="mb-0">65% de progreso total</p>
+        <p class="mb-0">{{ porcentaje_completado }}% de progreso total</p>
         <a href="{% url 'misiones:misiones' %}" class="btn btn-primary mt-3">Ver mis misiones</a>
       </div>
     </div>
@@ -68,7 +68,6 @@
             </div>
           </div>
         </div>
-        <p class="small mb-0"><span class="h6 mb-0">65% de progreso total</span> 📈 esta semana</p>
       </div>
       <div class="card-body pt-lg-10">
         <div class="row g-6">
@@ -150,10 +149,10 @@
               <span class="badge bg-success rounded-circle p-1 me-2"></span>
               <span>Completadas: {{ misiones_completadas }}</span>
             </div>
-            <span class="text-muted">{{ porcentaje_total }}%</span>
+            <span class="text-muted">{{ porcentaje_completadas }}%</span>
           </div>
           <div class="progress mb-3" style="height: 10px;">
-            <div class="progress-bar bg-success" role="progressbar" style="width: {{ porcentaje_total }}%;" aria-valuenow="{{ porcentaje_total }}" aria-valuemin="0" aria-valuemax="100"></div>
+            <div class="progress-bar bg-success" role="progressbar" style="width: {{ porcentaje_completadas }}%;" aria-valuenow="{{ porcentaje_completadas }}" aria-valuemin="0" aria-valuemax="100"></div>
           </div>
           
           <div class="d-flex justify-content-between mb-2">
@@ -170,7 +169,7 @@
           <div class="d-flex justify-content-between mb-2">
             <div class="d-flex align-items-center">
               <span class="badge bg-secondary rounded-circle p-1 me-2"></span>
-              <span>Pendientes: {{ misiones_en_progreso }}</span>
+              <span>Pendientes: {{ misiones_pendientes }}</span>
             </div>
             <span class="text-muted">{{ porcentaje_pendientes }}%</span>
           </div>
@@ -249,7 +248,7 @@
         show: false
       }
     },
-    series: [65],
+    series: [{{ porcentaje_completado|default:0 }}],
     plotOptions: {
       radialBar: {
         startAngle: -90,
@@ -302,69 +301,7 @@
     learningProgressChartOptions
   );
   learningProgressChart.render();
-
-  // Mission Progress Chart
-  var missionProgressChartOptions = {
-    chart: {
-      height: 200,
-      type: 'radialBar',
-    },
-    plotOptions: {
-      radialBar: {
-        offsetY: 0,
-        startAngle: 0,
-        endAngle: 270,
-        hollow: {
-          margin: 5,
-          size: '30%',
-          background: 'transparent',
-        },
-        track: {
-          show: false,
-        },
-        dataLabels: {
-          name: {
-            show: false,
-          },
-          value: {
-            show: false,
-          }
-        }
-      }
-    },
-    colors: ['#2dce89', '#ffd600', '#f5365c'],
-    series: [65, 25, 10],
-    labels: ['Completadas', 'En progreso', 'Pendientes'],
-    legend: {
-      show: true,
-      floating: true,
-      fontSize: '14px',
-      position: 'left',
-      offsetX: 10,
-      offsetY: 10,
-      labels: {
-        useSeriesColors: true,
-      },
-      markers: {
-        size: 0
-      },
-      formatter: function(seriesName, opts) {
-        return seriesName + ":  " + opts.w.globals.series[opts.seriesIndex] + "%";
-      },
-      itemMargin: {
-        vertical: 3
-      }
-    },
-    responsive: [{
-      breakpoint: 480,
-      options: {
-        legend: {
-          show: false
-        }
-      }
-    }]
-  };
-
+ 
   var missionProgressChart = new ApexCharts(
     document.querySelector("#missionProgressChart"),
     missionProgressChartOptions

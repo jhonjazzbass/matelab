@@ -6,7 +6,7 @@ from web_project import TemplateLayout
 from apps.authentication.models import Usuarios, Rol
 from apps.misiones.models import Mision, IntentoMision
 from apps.misiones.models import Habilidad
-
+from apps.biblioteca.models import Biblioteca, Biblioteca_Contenido
 """
 This file is a view controller for multiple pages as a module.
 Here you can override the page view layout.
@@ -63,12 +63,23 @@ class DashboardsView(TemplateView):
         total_misiones = misiones.count()
         misiones_completadas = intentos_usuario.filter(estado='completado').values('mision').distinct().count()
         misiones_en_progreso = intentos_usuario.filter(estado='en_progreso').values('mision').distinct().count()
+        misiones_pendientes = max(total_misiones - misiones_completadas - misiones_en_progreso, 0)
         total_habilidades = Habilidad.objects.count()
         
         # Calcular tasa de éxito (éxitos / total de intentos)
         total_intentos = intentos_usuario.count()
         exitos = intentos_usuario.filter(estado='completado').count()
         tasa_exito = round((exitos / total_intentos * 100), 1) if total_intentos > 0 else 0
+
+        # Calcular porcentajes de misiones por estado
+        if total_misiones > 0:
+            porcentaje_completadas = round((misiones_completadas / total_misiones * 100), 1)
+            porcentaje_en_progreso = round((misiones_en_progreso / total_misiones * 100), 1)
+            porcentaje_pendientes = round((misiones_pendientes / total_misiones * 100), 1)
+        else:
+            porcentaje_completadas = 0
+            porcentaje_en_progreso = 0
+            porcentaje_pendientes = 0
         
         # Calcular progreso semanal
         misiones_semana_actual = intentos_usuario.filter(
@@ -114,9 +125,13 @@ class DashboardsView(TemplateView):
             'misiones_totales': total_misiones,
             'misiones_completadas': misiones_completadas,
             'misiones_en_progreso': misiones_en_progreso,
+            'misiones_pendientes': misiones_pendientes,
             'total_habilidades': total_habilidades,
             'tasa_exito': tasa_exito,
             'porcentaje_completado': round((misiones_completadas / total_misiones * 100), 1) if total_misiones > 0 else 0,
+            'porcentaje_completadas': porcentaje_completadas,
+            'porcentaje_en_progreso': porcentaje_en_progreso,
+            'porcentaje_pendientes': porcentaje_pendientes,
             'misiones_semana_actual': misiones_semana_actual,
             'misiones_semana_anterior': misiones_semana_anterior,
             'misiones_tendencia_porcentaje': misiones_tendencia_porcentaje,
@@ -195,22 +210,26 @@ class OpcionesAprendizajeView(TemplateView):
     template_name = 'dashboards/biblioteca.html'
     
     def get_context_data(self, **kwargs):
-        from apps.biblioteca.models import Biblioteca
+        
         
         context = TemplateLayout.init(self, super().get_context_data(**kwargs))
         
         # Get all active biblioteca items
         contenidos = Biblioteca.objects.filter(activo=True).order_by('tipo', 'titulo')
-        
+        contenidos_con_detalle = (
+            contenidos
+            .filter(tipo='Contenido')
+            .select_related('detalle_contenido')
+        )
         # Group by type
         contenidos_por_tipo = {
-            'Contenido': contenidos.filter(tipo='Contenido'),
+            'Contenido': contenidos_con_detalle,
             'Juego': contenidos.filter(tipo='Juego'),
             'Practica': contenidos.filter(tipo='Practica')
         }
         
         context.update({
-            'contenidos_por_tipo': contenidos_por_tipo,
+            'contenidos_por_tipo': contenidos_por_tipo, 
             'total_contenidos': contenidos.count()
         })
         
@@ -242,31 +261,29 @@ class ReporteEstudiantesView(TemplateView):
                 Q(usuario_id__icontains=query)
             )
         
-        # Prepare student data with progress
         estudiantes_data = []
         for estudiante in estudiantes:
-            # Get all attempts for the student
             intentos = estudiante.intentomision_set.all()
             
-            # Get completed missions (where estado='completado')
             misiones_completadas = intentos.filter(estado='completado').count()
             
-            # Get total unique missions attempted
             total_misiones = intentos.values('mision').distinct().count()
             
-            # Calculate progress
             progreso = (misiones_completadas / total_misiones * 100) if total_misiones > 0 else 0
             
-            # Get average score (using completed missions as a simple metric)
             promedio = misiones_completadas / total_misiones * 10 if total_misiones > 0 else 0
             
-            # Get skills progress - using try/except since it's a OneToOneField
             try:
-                progreso_habilidad = estudiante.progresohabilidad
-                habilidades_data = [{
-                    'nombre': progreso_habilidad.habilidad.nombre,
-                    'porcentaje': progreso_habilidad.porcentaje_avance
-                }]
+                progreso_habilidad = getattr(estudiante, 'progresohabilidad', None)
+
+                if progreso_habilidad is not None:
+                    habilidades_data = [{
+                        'nombre': progreso_habilidad.habilidad.nombre,
+                        'porcentaje': progreso_habilidad.porcentaje_avance
+                    }]
+                else:
+                    habilidades_data = []
+
             except ProgresoHabilidad.DoesNotExist:
                 habilidades_data = []
             

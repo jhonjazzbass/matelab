@@ -1,115 +1,123 @@
-# Matelab — Guía de ejecución
+# MateLab
 
-Este proyecto es una aplicación Django con autenticación personalizada, módulo de misiones, biblioteca y dashboards.
+Bienvenido a MateLab. Una plataforma pedagógica innovadora construida con Django, diseñada para ofrecer una experiencia de aprendizaje interactiva a través de misiones, bibliotecas de recursos y dashboards analíticos.
 
-## Requisitos
-- Windows (recomendado; el proyecto está configurado para SQL Server en Windows)
-- Python 3.11 o 3.12
-- SQL Server (p. ej. SQL Server Express) en localhost con una instancia `SQLEXPRESS`
-- ODBC Driver 17 for SQL Server
-- Git (opcional)
+## Innovación Principal: Motor Adaptativo y Método de Pólya
 
-Notas:
-- El motor por defecto está configurado para Microsoft SQL Server usando `pyodbc` (ver `config/settings.py`).
+MateLab va más allá de un sistema tradicional de gestión del aprendizaje. Nuestro núcleo pedagógico y técnico incluye:
+
+- Método de Pólya: Un flujo estructurado de resolución de problemas matemáticos en 4 fases, guiando a los estudiantes a través del razonamiento lógico de forma escalonada.
+- Motor Adaptativo: La plataforma captura silenciosamente telemetría en segundo plano (como el tiempo invertido en cada fase y métricas de error). Este motor procesa los datos para ajustar dinámicamente la dificultad de las próximas misiones del estudiante, ofreciendo una ruta de aprendizaje verdaderamente personalizada y automatizada.
+
+## Requisitos del Entorno
+
+El proyecto está diseñado para ejecutarse de forma nativa en entornos Linux y utiliza PostgreSQL como su motor de base de datos principal.
+
+- Sistema Operativo: Linux (Ubuntu/Debian recomendado)
+- Python: 3.11 o 3.12
+- Base de Datos: PostgreSQL 14 o superior
+- Git (opcional, para control de versiones)
 
 ## Dependencias Python
-Vienen definidas en `requirements.txt`.
-Incluyen (extracto):
+
+Las dependencias principales vienen definidas en el archivo requirements.txt. Algunas de las bibliotecas clave incluyen:
+
 - Django 5.2.5
+- psycopg2-binary / psycopg2 (Driver para PostgreSQL)
 - whitenoise 6.9.0
 - python-dotenv 1.1.1
-- mssql-django / pyodbc (para SQL Server)
 
-## Preparación del entorno
-1) Crear y activar un entorno virtual
-```
-python -m venv .venv
-.\.venv\Scripts\activate
-```
+## Preparación del Entorno (Setup)
 
-2) Instalar dependencias
-```
-pip install --upgrade pip
-pip install -r requirements.txt
-```
+1. Clonar el repositorio
+   ```bash
+   git clone <url-del-repositorio>
+   cd matelab
+   ```
 
-3) Instalar el driver ODBC 17 (si no está instalado)
-- Descarga e instala desde Microsoft: "ODBC Driver 17 for SQL Server"
-- Asegúrate de que la arquitectura (x64/x86) coincide con tu Python
+2. Crear y activar un entorno virtual
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   ```
 
-## Variables de entorno
-El proyecto lee variables desde `.env` y `.env.prod` (ver `config/settings.py`).
-Usa el archivo `.env` del repo como base. Si necesitas generarlo desde cero, un ejemplo mínimo es:
-```
-SECRET_KEY=tu_clave_secreta_segura
+3. Instalar dependencias
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+
+## Variables de Entorno
+
+El proyecto lee variables desde el archivo .env o .env.prod para aislar configuraciones sensibles (ver config/settings.py). Crea un archivo .env en la raíz del proyecto basándote en este ejemplo:
+
+```env
+# Configuracion Base de Django
+SECRET_KEY=tu_clave_secreta_segura_y_aleatoria
 DJANGO_ENVIRONMENT=local
 BASE_URL=http://127.0.0.1:8000
+DEBUG=True
+
+# Credenciales de PostgreSQL
+DB_NAME=matelab_db
+DB_USER=postgres
+DB_PASSWORD=tu_password_seguro
+DB_HOST=127.0.0.1
+DB_PORT=5432
 ```
 
-Notas:
-- Si `SECRET_KEY` falta, la app generará una aleatoria en tiempo de ejecución.
-- Para producción, usa `.env.prod` y configura `DEBUG=False` (requiere ajustes adicionales).
+Nota: Para entornos de producción, utiliza un archivo .env.prod y asegúrate estrictamente de configurar DEBUG=False.
 
-## Base de datos (SQL Server por defecto)
-En `config/settings.py`:
-```
-DATABASES = {
-  'default': {
-    'ENGINE': 'mssql',
-    'NAME': 'matematicasdb',
-    'HOST': 'localhost\\SQLEXPRESS',
-    'USER': '',        # Autenticación de Windows
-    'PASSWORD': '',    # Autenticación de Windows
-    'OPTIONS': {
-      'driver': 'ODBC Driver 17 for SQL Server',
-      'extra_params': 'Trusted_Connection=yes;Encrypt=yes;TrustServerCertificate=yes'
-    },
-  }
-}
-```
-Opciones:
-- Autenticación de Windows (por defecto): deja `USER` y `PASSWORD` vacíos.
-- Usuario/Contraseña SQL: establece `USER` y `PASSWORD` y retira/ajusta `extra_params`.
+## Base de Datos, Migraciones y Sembrado
 
-Asegúrate de crear la BD `matematicasdb` en tu SQL Server antes de migrar.
+Antes de ejecutar las migraciones, asegúrate de que tu servidor PostgreSQL esté corriendo y de haber creado la base de datos definida en tu archivo .env (matelab_db en el ejemplo).
 
-## Migraciones y datos iniciales
-Aplica migraciones:
-```
-python manage.py migrate
-```
+1. Aplicar las migraciones a la Base de Datos:
+   ```bash
+   python manage.py migrate
+   ```
 
-Crear cuenta de superusuario (si procede):
-```
-python manage.py createsuperuser
-```
-Modelo de usuario personalizado: `authentication.Usuarios`.
+2. Setup y Sembrado de Datos Iniciales:
+   En lugar de crear usuarios de forma manual, utilizamos nuestro comando personalizado para inicializar la plataforma. Este es el paso principal para dejar la plataforma operativa. Generará los roles necesarios, usuarios base y poblará las tablas pedagógicas:
+   ```bash
+   python manage.py seed_matelab
+   ```
+   (Este paso reemplaza completamente la dependencia del clásico createsuperuser y deja tu base de datos lista para pruebas).
 
-## Ejecutar en desarrollo
-```
+## Ejecutar en Desarrollo
+
+Levanta el servidor de desarrollo local de Django:
+
+```bash
 python manage.py runserver
 ```
-La app estará disponible (por defecto) en `http://127.0.0.1:8000`.
 
-Si deseas exponer en todas las interfaces:
-```
+La aplicación estará disponible por defecto en: http://127.0.0.1:8000
+
+Si deseas exponer el servicio en todas las interfaces de red (útil para probar en otros dispositivos locales):
+```bash
 python manage.py runserver 0.0.0.0:8000
 ```
 
-## Estructura relevante
-- `manage.py`: punto de entrada de comandos Django
-- `config/settings.py`: configuración (DB, apps, plantillas, estáticos, etc.)
-- `apps/`: aplicaciones del proyecto
-  - `apps.authentication`: autenticación y modelo `Usuarios`
-  - `apps.misiones`: módulo de misiones
-  - `apps.biblioteca`: biblioteca
-  - `apps.dashboards`: dashboards y vistas
-- `templates/`: plantillas HTML
-- `src/assets`: archivos estáticos durante desarrollo
-- `staticfiles/`: destino de `collectstatic` para despliegue
+## Estructura Relevante del Proyecto
 
-## Comandos comunes
-- Migraciones: `python manage.py makemigrations` / `python manage.py migrate`
-- Crear superusuario: `python manage.py createsuperuser`
-- Ejecutar tests: `python manage.py test`
-- Recolectar estáticos (producción): `python manage.py collectstatic`
+El proyecto sigue una arquitectura modular enfocada en la escalabilidad:
+
+- manage.py: Punto de entrada de la línea de comandos de Django.
+- config/settings.py: Configuración global (Base de datos, apps instaladas, plantillas, estáticos, etc.).
+- apps/: Directorio principal de las aplicaciones del negocio.
+  - apps.authentication: Gestión de autenticación, sesiones y el modelo personalizado Usuarios.
+  - apps.misiones: Lógica core del motor adaptativo, métricas de telemetría y flujo de misiones.
+  - apps.biblioteca: Gestión de recursos y material de apoyo.
+  - apps.dashboards: Vistas y controladores para los paneles de métricas administrativas.
+- templates/: Plantillas HTML globales y componentes de interfaz.
+- src/assets: Archivos estáticos en tiempo de desarrollo (CSS, JS, imágenes).
+- staticfiles/: Directorio autogenerado que agrupa los estáticos listos para producción tras ejecutar collectstatic.
+
+## Comandos Comunes de Referencia
+
+- Generar nuevas migraciones: python manage.py makemigrations
+- Aplicar migraciones: python manage.py migrate
+- Sembrar datos iniciales: python manage.py seed_matelab
+- Ejecutar pruebas unitarias: python manage.py test
+- Recolectar estáticos (Producción): python manage.py collectstatic

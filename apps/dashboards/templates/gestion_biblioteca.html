@@ -24,7 +24,7 @@
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Biblioteca</h5>
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoContenido">
-          <i class="icon-base ri-add-line me-1"></i> Nuevo Contenido
+          <i class="icon-base ri-add-line me-1"></i> Agregar
         </button>
       </div>
       <div class="card-body">
@@ -44,7 +44,7 @@
             </select>
           </div>
           <div class="col-md-2">
-            <button class="btn btn-outline-secondary w-100">
+            <button id="applyFilter" class="btn btn-outline-secondary w-100">
               <i class="icon-base ri-filter-3-line me-1"></i> Filtrar
             </button>
           </div>
@@ -65,7 +65,7 @@
             <tbody>
               {% for item in contenidos %}
               <tr>
-                <td>{{ item.id }}</td>
+                <td>{{ item.biblioteca_id }}</td>
                 <td>{{ item.titulo }}</td>
                 <td><span class="badge bg-label-info">{{ item.tipo }}</span></td>
                 <td>{{ item.descripcion|truncatechars:50 }}</td>
@@ -82,11 +82,14 @@
             class="btn btn-icon btn-outline-primary me-2" 
             data-bs-toggle="modal" 
             data-bs-target="#editContenidoModal" 
-            data-contenido-id="{{ item.id }}"
+            data-contenido-id="{{ item.biblioteca_id }}"
             data-titulo="{{ item.titulo }}"
             data-tipo="{{ item.tipo }}"
-            data-descripcion="{{ item.descripcion }}"
+            data-descripcion="{{ item.descripcion|default_if_none:''|escape }}"
             data-activo="{{ item.activo|yesno:'1,0' }}"
+            data-teoria="{{ item.detalle_contenido.teoria|default_if_none:''|escape }}"
+            data-pasos="{{ item.detalle_contenido.pasos_trucos|default_if_none:''|escape }}"
+            data-ejemplo="{{ item.detalle_contenido.ejemplo|default_if_none:''|escape }}"
             title="Editar contenido">
                       <i class="menu-icon icon-base ri ri-edit-line"></i>
     </button>
@@ -94,7 +97,7 @@
             class="btn btn-icon btn-outline-danger" 
             data-bs-toggle="modal" 
             data-bs-target="#deleteContenidoModal" 
-            data-contenido-id="{{ item.id }}"
+            data-contenido-id="{{ item.biblioteca_id }}"
             data-titulo="{{ item.titulo }}"
             title="Eliminar contenido">
             <i class="menu-icon icon-base ri ri-delete-bin-line"></i>
@@ -137,7 +140,7 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Agregar Nuevo Contenido</h5>
+        <h5 class="modal-title">Agregar a Biblioteca</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -152,7 +155,7 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Tipo</label>
-                  <select name="tipo" class="form-select" required>
+                  <select name="tipo" class="form-select" required id="nuevo_tipo">
                     <option value="">Seleccionar tipo</option>
                     <option value="Practica">Práctica</option>
                     <option value="Juego">Juego</option> 
@@ -169,6 +172,22 @@
                 <div class="col-12">
                   <label class="form-label">Descripción</label>
                   <textarea name="descripcion" class="form-control" rows="4" placeholder="Descripción detallada del contenido" required></textarea>
+                </div>
+                <div id="extraContenidoFields" class="col-12 d-none">
+                  <div class="row g-3">
+                    <div class="col-12">
+                      <label class="form-label">Teoría</label>
+                      <textarea name="teoria" class="form-control" rows="5" placeholder="Explicación teórica del tema"></textarea>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Aplicación del metodo</label>
+                      <textarea name="pasos_trucos" class="form-control" rows="4" placeholder="Ingrese uno por línea o separados por ; o |"></textarea>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label">Ejemplo</label>
+                      <textarea name="ejemplo" class="form-control" rows="4" placeholder="Puede incluir HTML básico si lo requiere"></textarea>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -197,7 +216,7 @@
       </div>
       <form id="editContenidoForm" method="post" action="{% url 'editar_biblioteca' %}">
         {% csrf_token %}
-        <input type="hidden" name="id" id="edit_contenido_id"> 
+        <input type="hidden" name="biblioteca_id" id="edit_contenido_id"> 
         <div class="modal-body">
           <div class="mb-3">
             <label for="edit_titulo" class="form-label">Título</label>
@@ -232,6 +251,22 @@
             <label for="edit_descripcion" class="form-label">Descripción</label>
             <textarea class="form-control" id="edit_descripcion" name="descripcion" rows="4" required></textarea>
           </div>
+          <div id="editExtraContenidoFields" class="d-none">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Teoría</label>
+                <textarea id="edit_teoria" name="teoria" class="form-control" rows="5" placeholder="Explicación teórica del tema"></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Aplicación del metodo</label>
+                <textarea id="edit_pasos_trucos" name="pasos_trucos" class="form-control" rows="4" placeholder="Ingrese uno por línea o separados por ; o |"></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Ejemplo</label>
+                <textarea id="edit_ejemplo" name="ejemplo" class="form-control" rows="4" placeholder="Puede incluir HTML básico si lo requiere"></textarea>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -252,7 +287,7 @@
       </div>
       <form id="deleteContenidoForm" method="post" action="{% url 'eliminar_biblioteca' %}">
         {% csrf_token %}
-        <input type="hidden" name="id" id="delete_contenido_id">
+        <input type="hidden" name="biblioteca_id" id="delete_contenido_id">
         <div class="modal-body">
           <p>¿Está seguro que desea eliminar el contenido <strong id="delete_contenido_titulo"></strong>?</p>
           <p class="text-danger">Esta acción no se puede deshacer.</p>
@@ -272,29 +307,89 @@
 <script>
    // Inicializar DataTable con configuración personalizada
   $(document).ready(function() {
-    const table = $('#usersTable').DataTable({
-      responsive: true,
-      ordering: true,
-      order: [[0, 'desc']],
-      dom: '<"d-flex justify-content-between align-items-center mb-3"f<"ms-2"l>>rt<"d-flex justify-content-between align-items-center"ip>',
-      language: {
-        search: "",
-        searchPlaceholder: "Buscar...",
-        lengthMenu: "Mostrar _MENU_ registros",
-        info: "Mostrando _START_ a _END_ de _TOTAL_ usuarios",
-        paginate: {
-          previous: "<i class='icon-base ri-arrow-left-s-line'></i>",
-          next: "<i class='icon-base ri-arrow-right-s-line'></i>"
+    var table = null;
+    if ($.fn.DataTable) {
+      table = $('#usersTable').DataTable({
+        responsive: true,
+        ordering: true,
+        order: [[0, 'desc']],
+        dom: '<"d-flex justify-content-between align-items-center mb-3"f<"ms-2"l>>rt<"d-flex justify-content-between align-items-center"ip>',
+        language: {
+          search: "",
+          searchPlaceholder: "Buscar...",
+          lengthMenu: "Mostrar _MENU_ registros",
+          info: "Mostrando _START_ a _END_ de _TOTAL_ usuarios",
+          paginate: {
+            previous: "<i class='icon-base ri-arrow-left-s-line'></i>",
+            next: "<i class='icon-base ri-arrow-right-s-line'></i>"
+          }
         }
-      }
-    });
+      });
+    } else {
+      console.warn('DataTables no está cargado, se omite la inicialización.');
+    }
 
     // Inicializar Select2
-    $('.select2').select2({
-      placeholder: 'Seleccionar',
-      width: '100%',
-      theme: 'bootstrap-5'
+    if ($.fn.select2) {
+      $('.select2').select2({
+        placeholder: 'Seleccionar',
+        width: '100%',
+        theme: 'bootstrap-5'
+      });
+    } else {
+      console.warn('Select2 no está cargado, se omite la inicialización.');
+    }
+
+    // Filtro: búsqueda + tipo (con DataTables o fallback sin plugin)
+    function applyFilters(){
+      var q = ($('#searchInput').val() || '').trim();
+      var tipo = ($('#filterTipo').val() || '').trim();
+      if (table) {
+        // columna 2 = Tipo
+        table.search('');
+        table.column(2).search(tipo || '', false, false);
+        if (q) table.search(q);
+        table.draw();
+      } else {
+        var rows = document.querySelectorAll('#usersTable tbody tr');
+        rows.forEach(function(tr){
+          var cells = tr.querySelectorAll('td');
+          var cellTipo = cells[2] ? (cells[2].textContent || '').trim() : '';
+          var rowText = tr.textContent.toLowerCase();
+          var matchTipo = !tipo || cellTipo === tipo;
+          var matchQuery = !q || rowText.indexOf(q.toLowerCase()) !== -1;
+          tr.style.display = (matchTipo && matchQuery) ? '' : 'none';
+        });
+      }
+    }
+    // Eventos de filtro
+    $('#applyFilter').on('click', function(e){ e.preventDefault(); applyFilters(); });
+    $('#filterTipo').on('change', applyFilters);
+    $('#searchInput').on('input', function(){ applyFilters(); });
+    // Aplicar una vez al cargar
+    applyFilters();
+
+    function toggleNuevoExtraFields() {
+      const tipo = $('#nuevo_tipo').val();
+      const $extra = $('#extraContenidoFields');
+      if (tipo === 'Contenido') {
+        $extra.removeClass('d-none');
+      } else {
+        $extra.addClass('d-none');
+        // Limpiar campos cuando no aplica
+        $extra.find('textarea[name="teoria"]').val('');
+        $extra.find('textarea[name="pasos_trucos"]').val('');
+        $extra.find('textarea[name="ejemplo"]').val('');
+      }
+    }
+
+    // Inicializar al abrir el modal y al cambiar el tipo
+    $('#nuevoContenido').on('show.bs.modal shown.bs.modal', function(){
+      toggleNuevoExtraFields();
     });
+    $(document).on('change', '#nuevo_tipo', toggleNuevoExtraFields);
+    // Llamado inicial por si el modal ya está abierto o el valor viene seteado
+    toggleNuevoExtraFields();
   });
  
   
@@ -315,6 +410,17 @@
     return cookieValue;
   }
 
+  function decodeForTextarea(val) {
+    if (val === undefined || val === null) return '';
+    try {
+      const txt = document.createElement('textarea');
+      txt.innerHTML = String(val);
+      return txt.value;
+    } catch (e) {
+      return String(val);
+    }
+  }
+
   // Handle edit user modal
   $('#editContenidoModal').on('show.bs.modal', function (event) {
     const button = $(event.relatedTarget);
@@ -323,13 +429,38 @@
     const tipo = button.data('tipo');
     const descripcion = button.data('descripcion');
     const activo = button.data('activo') === '1';
+    // Leer atributos crudos para preservar entidades/escapes
+    const teoria = button.attr('data-teoria') || '';
+    const pasos = button.attr('data-pasos') || '';
+    const ejemplo = button.attr('data-ejemplo') || '';
     
     const modal = $(this);
     modal.find('#edit_contenido_id').val(contenidoId); 
     modal.find('#edit_titulo').val(titulo);
     modal.find('#edit_tipo').val(tipo);
     modal.find('#edit_descripcion').val(descripcion);
-    modal.find('#edit_activo').prop('checked', activo);
+    // Radios de estado
+    modal.find('#edit_activo_si').prop('checked', !!activo);
+    modal.find('#edit_activo_no').prop('checked', !activo);
+
+    // Campos extra si es Contenido
+    function toggleEditExtra(){
+      const esContenido = (modal.find('#edit_tipo').val() === 'Contenido');
+      const $extra = modal.find('#editExtraContenidoFields');
+      if (esContenido) {
+        $extra.removeClass('d-none');
+      } else {
+        $extra.addClass('d-none');
+      }
+    }
+    // Precargar valores si vienen (decodificados)
+    modal.find('#edit_teoria').val(decodeForTextarea(teoria));
+    modal.find('#edit_pasos_trucos').val(decodeForTextarea(pasos));
+    modal.find('#edit_ejemplo').val(decodeForTextarea(ejemplo));
+    toggleEditExtra();
+    modal.off('change.editTipo').on('change.editTipo', '#edit_tipo', function(){
+      toggleEditExtra();
+    });
   });
 
   // Handle delete user modal

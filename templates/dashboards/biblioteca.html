@@ -25,9 +25,11 @@
             <h2 class="fw-bold mb-0">Biblioteca</h2>
             <div class="d-flex gap-2 align-items-center">
               <select id="libraryFilter" class="form-select form-select-sm filter-select">
-                <option value="Contenido" selected>Filtros: Contenidos</option>
-                <option value="Juego">Filtros: Juegos</option>
-                <option value="Practica">Filtros: Prácticas</option>
+                <option value="todos" selected>Operación: Todas</option>
+                <option value="suma">Operación: Suma</option>
+                <option value="resta">Operación: Resta</option>
+                <option value="multiplicacion">Operación: Multiplicación</option>
+                <option value="division">Operación: División</option>
               </select>
               <button class="btn btn-primary" onclick="window.history.back()">
                 <i class="ri-arrow-go-back-line me-1"></i>Volver
@@ -35,200 +37,194 @@
             </div>
           </div>
 
-<!-- Modal de práctica -->
-<div class="modal fade" id="practicaModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      
-      <div class="modal-header bg-light border-bottom">
-        <h5 class="modal-title" id="practicaModalTitle">Práctica</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-      </div>
+          <!-- Modal de práctica -->
+          <div class="modal fade" id="practicaModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+              <div class="modal-content border-0 shadow">
+                
+                <div class="modal-header bg-light border-bottom">
+                  <h5 class="modal-title" id="practicaModalTitle">Práctica</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
 
-      <div class="modal-body">
-        <div class="mb-3 text-center">
-          <h5 class="fw-semibold">Resuelve el ejercicio</h5>
-          <p class="text-muted small mb-0">Lee con atención y escribe tu respuesta</p>
-        </div>
+                <div class="modal-body">
+                  <div class="mb-3 text-center">
+                    <h5 class="fw-semibold">Resuelve el ejercicio</h5>
+                    <p class="text-muted small mb-0">Lee con atención y escribe tu respuesta</p>
+                  </div>
 
-        <!-- Panel del ejercicio -->
-        <div class="card border shadow-sm mb-4">
+                  <!-- Panel del ejercicio -->
+                  <div class="card border shadow-sm mb-4">
+                    <div class="card-body">
+                      <div id="practicaProblemDesc" class="fw-semibold"></div>
+                    </div>
+                  </div>
+
+                  <!-- Área de respuesta -->
+                  <label class="form-label fw-semibold small text-muted">Tu respuesta</label>
+
+                  <div class="input-group input-group-lg mb-3">
+                    <input type="text" class="form-control" id="practicaRespuesta" placeholder="Escribe tu respuesta">
+                    <button class="btn btn-success" id="practicaVerificar">
+                      <i class="ri-check-line me-1"></i> Verificar
+                    </button>
+                  </div>
+
+                  <!-- Retroalimentación -->
+                  <div id="practicaFeedback" class="mt-2"></div>
+
+                  <div class="text-center mt-4">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="practicaReiniciar">
+                      Reiniciar
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+
+    <!-- Learning Options -->
+    <div class="row g-4">
+      <!-- Juegos Educativos -->
+      <div id="section-Juego" class="col-12 d-none">
+        <div class="card h-100">
+          <div class="card-header bg-label-success text-center p-3">
+            <h4 class="mb-0">
+              <i class="ri-gamepad-line me-2"></i>
+              Juegos Educativos
+            </h4>
+          </div>
           <div class="card-body">
-            <div id="practicaProblemDesc" class="fw-semibold"></div>
+            <p class="text-muted mb-4 text-center">Aprende jugando con nuestros juegos educativos.</p>
+            
+            {% for contenido in contenidos_por_tipo.Juego %}
+            <div class="card mb-3">
+              <div class="card-body">
+                <h5 class="card-title">{{ contenido.titulo }}</h5>
+                <p class="card-text text-muted">{{ contenido.descripcion|truncatechars:100 }}</p>
+              <a href="#"
+                class="btn btn-sm btn-success"
+                data-bs-toggle="modal"
+                data-bs-target="#gameModal"
+                onclick="abrirJuego('{{ contenido.titulo|escapejs }}', '{{ contenido.descripcion|escapejs }}', '{{ contenido.solucion|escapejs }}')">
+                <i class="ri-gamepad-line me-1"></i> Jugar ahora
+              </a>
+              </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4">
+              <i class="ri-information-line fs-1 text-muted mb-2"></i>
+              <p class="text-muted mb-0">No hay juegos disponibles</p>
+            </div>
+            {% endfor %}
           </div>
         </div>
-
-        <!-- Área de respuesta -->
-        <label class="form-label fw-semibold small text-muted">Tu respuesta</label>
-
-        <div class="input-group input-group-lg mb-3">
-          <input type="text" class="form-control" id="practicaRespuesta" placeholder="Escribe tu respuesta">
-          <button class="btn btn-success" id="practicaVerificar">
-            <i class="ti ti-check me-1"></i> Verificar
-          </button>
-        </div>
-
-        <!-- Retroalimentación -->
-        <div id="practicaFeedback" class="mt-2"></div>
-
-        <div class="text-center mt-4">
-          <button type="button" class="btn btn-outline-secondary btn-sm" id="practicaReiniciar">
-            Reiniciar
-          </button>
-        </div>
       </div>
 
-    </div>
-  </div>
-</div>
-
-
-          <!-- Learning Options -->
-          <div class="row g-4">
-            <!-- Juegos Educativos -->
-            <div id="section-Juego" class="col-12 d-none">
-              <div class="card h-100">
-                <div class="card-header bg-label-success text-center p-3">
-                  <h4 class="mb-0">
-                    <i class="ri-gamepad-line me-2"></i>
-                    Juegos Educativos
-                  </h4>
-                </div>
-                <div class="card-body">
-                  <p class="text-muted mb-4 text-center">Aprende jugando con nuestros juegos educativos.</p>
-                  
-                  {% for contenido in contenidos_por_tipo.Juego %}
-                  <div class="card mb-3">
-                    <div class="card-body">
-                      <h5 class="card-title">{{ contenido.titulo }}</h5>
-                      <p class="card-text text-muted">{{ contenido.descripcion|truncatechars:100 }}</p>
-                     <a href="#"
-                      class="btn btn-sm btn-success"
-                      data-bs-toggle="modal"
-                      data-bs-target="#gameModal"
-                      onclick="abrirJuego('{{ contenido.titulo|escapejs }}', '{{ contenido.descripcion|escapejs }}', '{{ contenido.solucion|escapejs }}')">
-                      <i class="ri-gamepad-line me-1"></i> Jugar ahora
-                    </a>
-                    </div>
-                  </div>
-                  {% empty %}
-                  <div class="text-center py-4">
-                    <i class="ti ti-info-circle fs-1 text-muted mb-2"></i>
-                    <p class="text-muted mb-0">No hay juegos disponibles</p>
-                  </div>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
-
-            <!-- Practicas -->
-            <div id="section-Practica" class="col-12 d-none">
-              <div class="card h-100">
-                <div class="card-header bg-label-info text-center p-3">
-                  <h4 class="mb-0">
-                    <i class="ri-edit-2-line me-2"></i>
-                    Prácticas
-                  </h4>
-                </div>
-                <div class="card-body">
-                  <p class="text-muted mb-4 text-center">Mejora tus habilidades con ejercicios prácticos.</p>
-                  
-                  {% for contenido in contenidos_por_tipo.Practica %}
-                  <div class="card mb-3">
-                    <div class="card-body d-flex align-items-center justify-content-between gap-3">
-                      <div class="d-flex align-items-center gap-3">
-                        <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center">
-                          <i class="ri-edit-2-line fs-5 text-secondary"></i>
-                        </div>
-                        <div class="text-truncate">
-                          <div class="fw-semibold text-truncate">{{ contenido.titulo }}</div>
-                          <div class="text-muted small text-truncate">{{ contenido.descripcion|truncatechars:120 }}</div>
-                        </div>
-                      </div>
-                      <a href="#"
-                         class="btn btn-sm btn-info"
-                         data-bs-toggle="modal"
-                         data-bs-target="#practicaModal"
-                         onclick="abrirPractica('{{ contenido.titulo|escapejs }}', '{{ contenido.descripcion|escapejs }}', '{{ contenido.solucion|escapejs }}')">
-                        <i class="ri-edit-2-line me-1"></i> Practicar
-                      </a>
-                    </div>
-                  </div>
-                  {% empty %}
-                  <div class="text-center py-4">
-                    <i class="ti ti-info-circle fs-1 text-muted mb-2"></i>
-                    <p class="text-muted mb-0">No hay prácticas disponibles</p>
-                  </div>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
+      <!-- Practicas -->
+      <div id="section-Practica" class="col-12 d-none">
+        <div class="card h-100">
+          <div class="card-header bg-label-info text-center p-3">
+            <h4 class="mb-0">
+              <i class="ri-edit-2-line me-2"></i>
+              Prácticas
+            </h4>
+          </div>
+          <div class="card-body">
+            <p class="text-muted mb-4 text-center">Mejora tus habilidades con ejercicios prácticos.</p>
             
-            <!-- Contenido -->
-            <div id="section-Contenido" class="col-12">
-              <div class="card h-100">
-                <div class="card-header bg-label-warning text-center p-3">
-                  <h4 class="mb-0">
-                    <i class="ri-file-text-line me-2"></i>
-                    Contenido
-                  </h4>
+            {% for contenido in contenidos_por_tipo.Practica %}
+            <div class="card mb-3">
+              <div class="card-body d-flex align-items-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center">
+                    <i class="ri-edit-2-line fs-5 text-secondary"></i>
+                  </div>
+                  <div class="text-truncate">
+                    <div class="fw-semibold text-truncate">{{ contenido.titulo }}</div>
+                    <div class="text-muted small text-truncate">{{ contenido.descripcion|truncatechars:120 }}</div>
+                  </div>
                 </div>
-                <div class="card-body">
-                  <p class="text-muted mb-4 text-center">Explora materiales, guías y recursos detallados.</p>
-                        <div class="card mb-3">
+                <a href="#"
+                  class="btn btn-sm btn-info"
+                  data-bs-toggle="modal"
+                  data-bs-target="#practicaModal"
+                  onclick="abrirPractica('{{ contenido.titulo|escapejs }}', '{{ contenido.descripcion|escapejs }}', '{{ contenido.solucion|escapejs }}')">
+                  <i class="ri-edit-2-line me-1"></i> Practicar
+                </a>
+              </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4">
+              <i class="ri-information-line fs-1 text-muted mb-2"></i>
+              <p class="text-muted mb-0">No hay prácticas disponibles</p>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      
+              <!-- Contenido -->
+              <div id="section-Contenido" class="col-12">
+                <div class="card h-100">
+                  <div class="card-header bg-label-warning text-center p-3">
+                    <h4 class="mb-0">
+                      <i class="ri-file-text-line me-2"></i>
+                      Contenido
+                    </h4>
+                  </div>
+                  <div class="card-body">
+                    <p class="text-muted mb-4 text-center">Explora materiales, guías y recursos detallados.</p>
+                
+                    {% for contenido in contenidos_por_tipo.Contenido %}
+                    <div class="library-item card mb-3" data-operacion="{{ contenido.detalle_contenido.tipo|default_if_none:''|lower }}">
                     <div class="card-body">
                       <div class="d-flex align-items-center justify-content-between gap-3">
+
+                        <!-- Contenedor izquierdo: icono + texto -->
                         <div class="d-flex align-items-center gap-3">
                           <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center">
                             <i class="ri-book-line fs-5 text-secondary"></i>
                           </div>
-                          <div class="text-truncate">
-                            <div class="fw-semibold text-truncate">Cómo sumar números de 2 cifras</div>
-                            <div class="text-muted small text-truncate">La suma combina cantidades. Practicaremos suma por columnas con llevadas.</div>
+
+                          <div class="div text-truncate">
+                            <div class="fw-semibold text-truncate">
+                              {{ contenido.titulo }}
+                              {% if contenido.detalle_contenido.tipo %}
+                                <span class="badge bg-label-primary ms-2 text-uppercase">{{ contenido.detalle_contenido.tipo }}</span>
+                              {% endif %}
+                            </div>
+                            <div class="text-muted small text-truncate">
+                              {{ contenido.descripcion|default_if_none:""|truncatechars:120 }}
+                            </div>
                           </div>
                         </div>
+
+                        <!-- Botón alineado a la derecha -->
                         <a href="#"
-                           class="btn btn-sm btn-primary"
-                           data-bs-toggle="modal"
-                           data-bs-target="#contentModal"
-
-                    data-titulo="Cómo sumar números de 2 cifras"
-                    data-descripcion="La suma combina cantidades. Practicaremos suma por columnas con llevadas."
-                    data-explicacion="<p>La <strong>suma por columnas</strong> alinea unidades con unidades y decenas con decenas. Si las unidades suman 10 o más, <em>llevas</em> 1 a las decenas.</p>"
-                    data-pasos='["Alinea por columnas","Suma unidades y lleva si es ≥ 10","Suma decenas incluyendo el llevado","Escribe el resultado"]'
-                    data-ejemplo='<div class="p-2 border rounded bg-light"><div class="fw-semibold mb-1">Ejemplo: 27 + 15</div><div class="font-monospace">  27<br>+ 15<br><span class="text-primary">────</span><br>  42</div><p class="mb-0 mt-2 small text-muted">Unidades: 7+5=12 (escribo 2, llevo 1). Decenas: 2+1+1(llevado)=4.</p></div>' 
-
-                    onclick="abrirContenidoDesdeData(this)">
-                     <i class="ri-eye-line me-1"></i>  
-                    Ver contenido
+                          class="btn btn-sm btn-primary"
+                          data-bs-toggle="modal"
+                          data-bs-target="#contentModal"
+                          data-biblioteca-id="{{ contenido.biblioteca_id }}"
+                          data-titulo="{{ contenido.titulo|escapejs }}"
+                          data-descripcion="{{ contenido.descripcion|default_if_none:''|escapejs }}"
+                          data-explicacion="{{ contenido.detalle_contenido.teoria|default_if_none:''|escapejs }}"
+                          data-pasos="{{ contenido.detalle_contenido.pasos_trucos|default_if_none:''|escapejs }}"
+                          data-ejemplo="{{ contenido.detalle_contenido.ejemplo|default_if_none:''|escapejs }}"
+                          onclick="abrirContenidoDesdeData(this)">
+                          <i class="ri-eye-line me-1"></i>
+                          Ver contenido
                         </a>
+
                       </div>
                     </div>
                   </div>
-                  {% for contenido in contenidos_por_tipo.Contenido %}
-                  <div class="library-item card mb-3">
-                    <div class="card-body d-flex align-items-center justify-content-between gap-3">
-                      <div class="d-flex align-items-center gap-3">
-                        <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center">
-                          <i class="ri-book-line fs-5 text-secondary"></i>
-                        </div>
-                        <div class="text-truncate">
-                          <div class="fw-semibold text-truncate">{{ contenido.titulo }}</div>
-                          <div class="text-muted small text-truncate">{{ contenido.descripcion|default_if_none:""|truncatechars:120 }}</div>
-                        </div>
-                      </div>
-                      <a href="#"
-                         class="btn btn-sm btn-primary"
-                         data-bs-toggle="modal"
-                         data-bs-target="#contentModal"
-                         onclick="abrirContenido('{{ contenido.titulo|escapejs }}', '{{ contenido.descripcion|default_if_none:''|escapejs }}', '{{ contenido.descripcion|default_if_none:''|escapejs }}', '', '{{ contenido.contenido|default_if_none:''|escapejs }}')">
-                        <i class="ri-eye-line me-1"></i> Ver contenido
-                      </a>
-                    </div>
-                  </div>
+
                   {% empty %}
                   <div class="text-center py-4">
-                    <i class="ti ti-info-circle fs-1 text-muted mb-2"></i>
+                    <i class="ri-information-line fs-1 text-muted mb-2"></i>
                     <p class="text-muted mb-0">No hay contenidos disponibles</p>
                   </div>
                   {% endfor %}
@@ -243,11 +239,8 @@
     </div>
     <!-- / Layout page: End -->
   </div>
-</div>
-<!-- / Layout wrapper: End -->
-
-
-
+  </div>
+  <!-- / Layout wrapper: End -->
 
 <!-- Modal del juego -->
 <div class="modal fade" id="gameModal" tabindex="-1" aria-hidden="true">
@@ -266,20 +259,138 @@
 
 <!-- Modal de Contenido -->
 <div class="modal fade" id="contentModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+  <div class="modal-dialog modal-xl modal-dialog-centered position-relative">
+    <button type="button" id="contentNavPrev" class="content-nav-btn" title="Anterior">
+      <i class="ri-arrow-left-s-line"></i>
+      <span class="visually-hidden">Anterior</span>
+    </button>
+    <button type="button" id="contentNavNext" class="content-nav-btn" title="Siguiente">
+      <i class="ri-arrow-right-s-line"></i>
+      <span class="visually-hidden">Siguiente</span>
+    </button>
     <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
 
       <!-- Header -->
       <div class="modal-header bg-primary text-white py-3">
         <h5 class="modal-title fw-semibold" id="contentModalLabel">Contenido</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
       </div>
 
       <!-- Body -->
       <div class="modal-body p-4" style="background: #f8f9fc;">
+        <div class="row g-3">
+          <!-- Columna izquierda: Método de Pólya -->
+          <div class="col-lg-5">
+            <div class="p-3 bg-white rounded-3 shadow-sm h-100">
+              <div class="d-flex align-items-center justify-content-between mb-3">
+                <h6 class="mb-0"><i class="ri-brain-line text-primary me-2"></i>Método de Pólya</h6>
+                <button type="button" class="btn btn-sm btn-primary" id="bpolyaSaveBtn">
+                  <i class="ri-save-3-line me-1"></i> Guardar
+                </button>
+              </div>
+              <div class="accordion accordion-flush" id="bpolyaAccordion" style="max-height: 500px; overflow-y: auto;">
+                <div class="accordion-item">
+                  <h2 class="accordion-header" id="bpolyaHeading1">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#bpolyaStep1" aria-expanded="false" aria-controls="bpolyaStep1">
+                      <span class="me-2 badge bg-label-primary">1</span> Comprender
+                    </button>
+                  </h2>
+                  <div id="bpolyaStep1" class="accordion-collapse collapse" aria-labelledby="bpolyaHeading1" data-bs-parent="#bpolyaAccordion">
+                    <div class="accordion-body p-2">
+                      <div class="mb-2">
+                        <label class="form-label small">Operación</label>
+                        <select class="form-select form-select-sm" id="bpolya-ident-op">
+                          <option value="">Selecciona</option>
+                          <option value="suma">Suma</option>
+                          <option value="resta">Resta</option>
+                          <option value="multiplicacion">Multiplicación</option>
+                          <option value="division">División</option>
+                        </select>
+                      </div>
+                      <div class="mb-2">
+                        <label class="form-label small">¿Por qué?</label>
+                        <textarea class="form-control form-control-sm" rows="2" id="bpolya-por-que" placeholder="Explica"></textarea>
+                      </div>
+                      <div>
+                        <label class="form-label small">Números</label>
+                        <div id="bpolya-sumandos"></div>
+                        <button type="button" class="btn btn-sm btn-outline-primary mt-1" id="bpolya-add-sumando">
+                          <i class="ri-add-line"></i>
+                          <span class="ms-1">Agregar número</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="accordion-item">
+                  <h2 class="accordion-header" id="bpolyaHeading2">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#bpolyaStep2" aria-expanded="false" aria-controls="bpolyaStep2">
+                      <span class="me-2 badge bg-label-info">2</span> Planificar
+                    </button>
+                  </h2>
+                  <div id="bpolyaStep2" class="accordion-collapse collapse" aria-labelledby="bpolyaHeading2" data-bs-parent="#bpolyaAccordion">
+                    <div class="accordion-body p-2">
+                      <label class="form-label small">Estrategia</label>
+                      <textarea class="form-control form-control-sm" rows="3" id="bpolya-estrategia" placeholder="Plan"></textarea>
+                    </div>
+                  </div>
+                </div>
+                <div class="accordion-item">
+                  <h2 class="accordion-header" id="bpolyaHeading3">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#bpolyaStep3" aria-expanded="false" aria-controls="bpolyaStep3">
+                      <span class="me-2 badge bg-label-warning">3</span> Ejecutar
+                    </button>
+                  </h2>
+                  <div id="bpolyaStep3" class="accordion-collapse collapse" aria-labelledby="bpolyaHeading3" data-bs-parent="#bpolyaAccordion">
+                    <div class="accordion-body p-2">
+                      <div class="mb-2">
+                        <label class="form-label small">Desarrollo</label>
+                        <textarea class="form-control form-control-sm" rows="3" id="bpolya-desarrollo" placeholder="Pasos"></textarea>
+                      </div>
+                      <div>
+                        <label class="form-label small">Calculadora</label>
+                        <div id="bpolya-calc-inputs" class="mb-1"></div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="bpolya-add-calc-input">
+                          <i class="ri-add-line"></i>
+                          <span class="ms-1">Agregar casilla</span>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary ms-1" id="bpolya-calc">
+                          <i class="ri-equal-line"></i>
+                          <span class="ms-1">Calcular</span>
+                        </button>
+                        <div class="small text-muted mt-1">= <span id="bpolya-calc-result">—</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="accordion-item">
+                  <h2 class="accordion-header" id="bpolyaHeading4">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#bpolyaStep4" aria-expanded="false" aria-controls="bpolyaStep4">
+                      <span class="me-2 badge bg-label-success">4</span> Verificar
+                    </button>
+                  </h2>
+                  <div id="bpolyaStep4" class="accordion-collapse collapse" aria-labelledby="bpolyaHeading4" data-bs-parent="#bpolyaAccordion">
+                    <div class="accordion-body p-2">
+                      <div class="mb-2">
+                        <label class="form-label small">Revisión</label>
+                        <textarea class="form-control form-control-sm" rows="2" id="bpolya-revision" placeholder="Verifica"></textarea>
+                      </div>
+                      <div>
+                        <label class="form-label small">Resultado</label>
+                        <input type="text" class="form-control form-control-sm" id="bpolya-mi-resultado" placeholder="Tu resultado">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <!-- Tarjeta general -->
-        <div class="p-4 bg-white rounded-3 shadow-sm">
+          <!-- Columna derecha: Contenido -->
+          <div class="col-lg-7">
+            <div class="p-4 bg-white rounded-3 shadow-sm">
 
           <!-- Descripción -->
           <div class="content-section mb-4 pb-3 border-bottom" id="contentDescWrap">
@@ -295,7 +406,7 @@
 
           <!-- Pasos -->
           <div class="content-section mb-4 pb-3 border-bottom" id="contentPasosWrap">
-            <h6 class="text-primary fw-bold mb-2">Pasos o trucos</h6>
+            <h6 class="text-primary fw-bold mb-2">Aplicación del Metodo</h6>
             <ul id="contentPasos" class="mb-0 ps-3 text-secondary" style="line-height: 1.7;"></ul>
           </div>
 
@@ -305,12 +416,42 @@
             <div id="contentEjemplo" class="rounded p-3 bg-light border text-secondary"></div>
           </div>
 
+            </div>
+          </div>
         </div>
       </div>
 
     </div>
+
   </div>
+   <div class="position-absolute bottom-0 end-0 p-3" style="z-index: 10;">
+      <div class="d-flex align-items-center gap-3 bg-white shadow-sm p-3 rounded-3 border">
+
+        <label class="fw-semibold text-primary mb-0">¿Ha comprendido el tema?</label>
+
+        <!-- Radios -->
+        <div class="d-flex align-items-center gap-2">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="comprensionTema" id="comprensionSi" value="si">
+            <label class="form-check-label text-secondary" for="comprensionSi">Sí</label>
+          </div>
+
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="comprensionTema" id="comprensionNo" value="no">
+            <label class="form-check-label text-secondary" for="comprensionNo">No</label>
+          </div>
+        </div>
+
+        <!-- Botón -->
+        <button class="btn btn-primary fw-semibold px-3" id="btnConfirmarComprension">
+          Confirmar
+        </button>
+
+      </div>
+    </div>
+
 </div>
+
 
 
 {% endblock %}
@@ -413,7 +554,55 @@
   .filter-select:focus { box-shadow: 0 0 0 0.2rem rgba(111,66,193,.25); color: #fff; }
   .avatar-sm { width: 40px; height: 40px; }
   .library-item .card-body { padding-top: 1rem; padding-bottom: 1rem; }
-</style>
+  /* Estilo sílabo: color lateral por operación */
+  .library-item { border-left: 4px solid #e9ecef; }
+  .library-item[data-operacion="suma"] { border-left-color: #28c76f; }
+  .library-item[data-operacion="resta"] { border-left-color: #ff9f43; }
+  .library-item[data-operacion="multiplicacion"] { border-left-color: #7367f0; }
+  .library-item[data-operacion="division"] { border-left-color: #ea5455; }
+  /* Botones flotantes prev/next pegados al modal */
+  .modal-dialog{ position: relative; }
+  .content-nav-btn{
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: #6f42c1; /* morado */
+    color: #fff;
+    border: none;
+    box-shadow: 0 6px 18px rgba(111,66,193,.35);
+    z-index: 1061; /* por encima del modal (1055) y backdrop (1050) */
+    pointer-events: auto;
+  }
+  .content-nav-btn:hover{ filter: brightness(1.05); }
+  .content-nav-btn:disabled{ opacity: .45; pointer-events: none; }
+  #contentNavPrev{ left: -12px; }  /* fuera del borde del modal con margen */
+  #contentNavNext{ right: -12px; }
+
+  /* Estilo académico del modal */
+  #contentModal .modal-header{
+    background: linear-gradient(135deg, #7c4dff, #6f42c1);
+    border-bottom: none;
+  }
+  #contentModal .modal-title{ letter-spacing: .2px; }
+  #contentModal .content-section{ padding: .75rem 0 1rem; }
+  #contentModal .content-section h6{
+    font-weight: 700; letter-spacing: .3px; text-transform: none;
+  }
+  #contentModal .content-section > *:not(h6){ font-size: .97rem; }
+  #contentModal .content-section{ border-left: 3px solid rgba(111,66,193,.35); padding-left: .75rem; }
+  #contentModal .content-section + .content-section{ border-top: 1px dashed rgba(0,0,0,.06); }
+  #contentEjemplo { white-space: pre-wrap; }
+  /* Pólya dentro del modal */
+  #bpolyaAccordion .accordion-button { font-size: 0.9rem; padding: 0.5rem 0.75rem; }
+  #bpolyaAccordion .form-control-sm, #bpolyaAccordion .form-select-sm { font-size: 0.85rem; }
+  #bpolyaAccordion .form-label.small { font-size: 0.8rem; margin-bottom: 0.25rem; }
+ </style>
 {% endblock %}
 
 {% block page_js %}
@@ -452,20 +641,48 @@
     var practicarBtn = document.querySelector('[data-option="practicar"] .btn');
     if (practicarBtn) practicarBtn.addEventListener('click', function() { console.log('Practicar clicked'); });
 
-    // Filter: toggle sections
+    // Filtro por operación dentro de Contenido
     var filter = document.getElementById('libraryFilter');
-    var sections = ['Juego','Practica','Contenido'];
-    function showSection(name){
-      sections.forEach(function(s){
-        var el = document.getElementById('section-' + s);
-        if (!el) return;
-        if (s === name) el.classList.remove('d-none');
-        else el.classList.add('d-none');
+    function applyOperationFilter(){
+      var val = (filter && filter.value) ? filter.value.toLowerCase() : 'todos';
+      var cards = document.querySelectorAll('#section-Contenido .library-item');
+      cards.forEach(function(card){
+        var op = (card.getAttribute('data-operacion') || '').toLowerCase();
+        if (val === 'todos' || op === val) card.classList.remove('d-none');
+        else card.classList.add('d-none');
       });
+      refreshContenidoAnchors();
     }
-    showSection('Contenido');
-    if (filter) {
-      filter.addEventListener('change', function(){ showSection(filter.value); });
+    applyOperationFilter();
+    if (filter) filter.addEventListener('change', applyOperationFilter);
+    // Botones de navegación fuera del modal
+    var prevBtn = document.getElementById('contentNavPrev');
+    var nextBtn = document.getElementById('contentNavNext');
+    if (prevBtn) prevBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); navigateContent(-1); });
+    if (nextBtn) nextBtn.addEventListener('click', function(e){ e.preventDefault(); e.stopPropagation(); navigateContent(1); });
+
+    // Navegación con teclado cuando el modal está abierto
+    var contentModalEl = document.getElementById('contentModal');
+    function keyHandler(e){
+      if (e.key === 'ArrowLeft') navigateContent(-1);
+      else if (e.key === 'ArrowRight') navigateContent(1);
+    }
+    if (contentModalEl){
+      var polyaEl = document.getElementById('polyaModal');
+      contentModalEl.addEventListener('shown.bs.modal', function(){
+        refreshContenidoAnchors();
+        updateNavButtons();
+        // mostrar botones flotantes al abrir
+        if (prevBtn) prevBtn.style.display = 'flex';
+        if (nextBtn) nextBtn.style.display = 'flex';
+        document.addEventListener('keydown', keyHandler);
+      });
+      contentModalEl.addEventListener('hidden.bs.modal', function(){
+        // ocultar botones flotantes al cerrar
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+        document.removeEventListener('keydown', keyHandler);
+      });
     }
   });
 
@@ -479,10 +696,10 @@ function abrirJuego(titulo, descripcion, solucion) {
             const modal = new bootstrap.Modal(document.getElementById("gameModal"));
             
             // Update the modal title and description
-            document.getElementById("gameModalLabel").textContent = titulo;
+            document.getElementById("gameModalLabel").textContent = decodeJsEscapes(titulo);
             const descElement = document.getElementById("gameModalDesc");
             if (descElement) {
-                descElement.textContent = descripcion;
+                descElement.textContent = decodeJsEscapes(descripcion);
             }
             
             // Evitar duplicar backdrops si el modal ya fue abierto por data-bs-toggle
@@ -507,9 +724,9 @@ function abrirPractica(titulo, descripcion, solucion) {
     const verificarBtn = document.getElementById('practicaVerificar');
     const reiniciarBtn = document.getElementById('practicaReiniciar');
 
-    if (titleEl) titleEl.textContent = titulo || 'Práctica';
-    if (descEl) descEl.textContent = descripcion || '';
-    if (bannerEl) bannerEl.textContent = titulo || '—';
+    if (titleEl) titleEl.textContent = decodeJsEscapes(titulo || 'Práctica');
+    if (descEl) descEl.textContent = decodeJsEscapes(descripcion || '');
+    if (bannerEl) bannerEl.textContent = decodeJsEscapes(titulo || '—');
 
     if (inputEl) {
       inputEl.value = '';
@@ -574,29 +791,101 @@ function abrirPractica(titulo, descripcion, solucion) {
     }
 }
 
-function abrirContenidoDesdeData(element) {
-  const titulo = element.dataset.titulo;
-  const descripcion = element.dataset.descripcion;
-  const explicacion = element.dataset.explicacion;
-  const pasos = JSON.parse(element.dataset.pasos);
-  const ejemplo = element.dataset.ejemplo;
-
-  abrirContenido(titulo, descripcion, explicacion, pasos, ejemplo);
+function decodeJsEscapes(str){
+  if (str == null) return '';
+  var out = String(str);
+  for (var i = 0; i < 3; i++) {
+    out = out.replace(/\\+u([0-9a-fA-F]{4})/g, '\\u$1').replace(/\\+x([0-9a-fA-F]{2})/g, '\\x$1');
+    try {
+      out = JSON.parse('"' + out.replace(/"/g,'\\"') + '"');
+    } catch(e) {}
+    var prev = out;
+    out = out
+      .replace(/\\u([0-9a-fA-F]{4})/g, function(_,h){ return String.fromCharCode(parseInt(h,16)); })
+      .replace(/\\x([0-9a-fA-F]{2})/g, function(_,h){ return String.fromCharCode(parseInt(h,16)); })
+      .replace(/\\n/g, '\n')
+      .replace(/\\r/g, '\r')
+      .replace(/\\t/g, '\t');
+    if (out === prev || (!/\\u[0-9a-fA-F]{4}/.test(out) && !/\\x[0-9a-fA-F]{2}/.test(out))) break;
+  }
+  return out;
 }
 
-function abrirContenido(titulo, descripcion, teoria, pasos, ejemploHtml) {
-  const modalEl = document.getElementById('contentModal');
-  const modal = new bootstrap.Modal(modalEl);
+function replaceCommonEscapes(s){
+  return String(s)
+    .replace(/\\u003D/gi, '=')
+    .replace(/\\u002D/gi, '-')
+    .replace(/\\u0009/gi, '\t')
+    .replace(/\\u000a/gi, '\n')
+    .replace(/\\u000d/gi, '\r');
+}
 
-  document.getElementById('contentModalLabel').textContent = titulo || 'Contenido';
+function refreshContenidoAnchors(){
+  contenidoAnchors = Array.from(document.querySelectorAll('#section-Contenido .library-item:not(.d-none) a[data-bs-target="#contentModal"]'));
+}
+
+function abrirContenidoDesdeData(element) {
+  // Actualizar lista según filtro activo
+  refreshContenidoAnchors();
+  currentContentIndex = contenidoAnchors.indexOf(element);
+
+  const titulo = decodeJsEscapes(element.dataset.titulo);
+  const descripcion = decodeJsEscapes(element.dataset.descripcion);
+  const explicacion = decodeJsEscapes(element.dataset.explicacion);
+  var pasosRaw = element.dataset.pasos || '';
+  var pasosDec = decodeJsEscapes(pasosRaw);
+  var pasos;
+  try { pasos = pasosDec ? JSON.parse(pasosDec) : []; }
+  catch(e) { pasos = pasosDec; }
+  const ejemplo = decodeJsEscapes(element.dataset.ejemplo);
+  const bibliotecaId = element.dataset.bibliotecaId;
+  const operacion = element.closest('.library-item') && element.closest('.library-item').getAttribute('data-operacion')
+    ? element.closest('.library-item').getAttribute('data-operacion').toLowerCase()
+    : '';
+
+  abrirContenido(titulo, descripcion, explicacion, pasos, ejemplo, bibliotecaId, operacion);
+  updateNavButtons();
+}
+
+function navigateContent(dir){
+  if (!contenidoAnchors || contenidoAnchors.length === 0) return;
+  if (currentContentIndex < 0) currentContentIndex = 0;
+  var next = currentContentIndex + (dir > 0 ? 1 : -1);
+  // Buscar el siguiente válido dentro de rango
+  if (next < 0 || next >= contenidoAnchors.length) return;
+  currentContentIndex = next;
+  var el = contenidoAnchors[currentContentIndex];
+  if (el) abrirContenidoDesdeData(el);
+}
+
+var bibliotecaIdActual = null;
+
+function updateNavButtons(){
+  var prevBtn = document.getElementById('contentNavPrev');
+  var nextBtn = document.getElementById('contentNavNext');
+  if (!prevBtn || !nextBtn) return;
+  if (!contenidoAnchors || contenidoAnchors.length === 0){
+    prevBtn.disabled = true; nextBtn.disabled = true; return;
+  }
+  prevBtn.disabled = currentContentIndex <= 0;
+  nextBtn.disabled = currentContentIndex >= (contenidoAnchors.length - 1);
+}
+
+function abrirContenido(titulo, descripcion, teoria, pasos, ejemploHtml, bibliotecaId, operacion) {
+  const modalEl = document.getElementById('contentModal');
+  const modal = bootstrap.Modal.getOrCreateInstance(modalEl, { backdrop: 'static', keyboard: false });
+
+  bibliotecaIdActual = bibliotecaId || null;
+
+  document.getElementById('contentModalLabel').textContent = decodeJsEscapes(titulo || 'Contenido');
 
   // Descripción
-  const desc = descripcion || '';
+  const desc = decodeJsEscapes(descripcion || '');
   document.getElementById('contentDesc').textContent = desc;
   document.getElementById('contentDescWrap').style.display = desc ? '' : 'none';
 
   // Teoría
-  const te = teoria || '';
+  const te = replaceCommonEscapes(decodeJsEscapes(teoria || ''));
   document.getElementById('contentTeoria').innerHTML = te;
   document.getElementById('contentTeoriaWrap').style.display = te ? '' : 'none';
 
@@ -619,7 +908,7 @@ function abrirContenido(titulo, descripcion, teoria, pasos, ejemploHtml) {
   if (items.length > 0) {
     items.forEach(txt => {
       const li = document.createElement('li');
-      li.textContent = txt;
+      li.textContent = replaceCommonEscapes(decodeJsEscapes(txt));
       pasosEl.appendChild(li);
     });
     document.getElementById('contentPasosWrap').style.display = '';
@@ -628,9 +917,14 @@ function abrirContenido(titulo, descripcion, teoria, pasos, ejemploHtml) {
   }
 
   // Ejemplo
-  const ej = ejemploHtml || '';
+  const ej = replaceCommonEscapes(decodeJsEscapes(ejemploHtml || ''));
   document.getElementById('contentEjemplo').innerHTML = ej;
   document.getElementById('contentEjemploWrap').style.display = ej ? '' : 'none';
+
+  // Configurar Método de Pólya para esta biblioteca
+  try {
+    bpolyaSetup(bibliotecaIdActual, (operacion || '').toLowerCase());
+  } catch (e) { /* noop */ }
 
   modal.show();
 }
@@ -645,6 +939,275 @@ function compararRespuestas(userVal, correctVal){
   const cn = Number(correctVal);
   if (!isNaN(un) && !isNaN(cn)) return un === cn;
   return u === c;
+}
+
+// --- Pólya en Biblioteca (Base de Datos) ---
+var bpolyaState = { id: null, op: '' };
+
+function bpolyaRenderSumandos(values){
+  var wrap = document.getElementById('bpolya-sumandos');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  var list = (Array.isArray(values) && values.length) ? values : [''];
+  list.forEach(function(v){
+    var group = document.createElement('div');
+    group.className = 'mb-2';
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'form-control';
+    input.name = 'bpolya_sumando';
+    input.placeholder = 'Ingresa un número o sumando';
+    input.value = v || '';
+    group.appendChild(input);
+    wrap.appendChild(group);
+  });
+}
+
+function bpolyaGetSumandos(){
+  var wrap = document.getElementById('bpolya-sumandos');
+  if (!wrap) return [];
+  var inputs = wrap.querySelectorAll('input[name="bpolya_sumando"]');
+  var items = [];
+  inputs.forEach(function(inp){ var v = (inp.value || '').trim(); if (v) items.push(v); });
+  return items;
+}
+
+function bpolyaGetCalcNumbers(){
+  var wrap = document.getElementById('bpolya-calc-inputs');
+  if (!wrap) return [];
+  var inputs = wrap.querySelectorAll('input[name="bpolya_calc_num"]');
+  var nums = [];
+  inputs.forEach(function(inp){ var v = parseFloat(inp.value); if (!isNaN(v)) nums.push(v); });
+  return nums;
+}
+
+function bpolyaAddCalcInput(value){
+  var wrap = document.getElementById('bpolya-calc-inputs');
+  if (!wrap) return;
+  var input = document.createElement('input');
+  input.type = 'number';
+  input.className = 'form-control mb-2';
+  input.name = 'bpolya_calc_num';
+  input.placeholder = 'Número';
+  input.value = (value !== undefined && value !== null) ? value : '';
+  wrap.appendChild(input);
+}
+
+function bpolyaCalc(){
+  var nums = bpolyaGetCalcNumbers();
+  var resultEl = document.getElementById('bpolya-calc-result');
+  if (!resultEl) return;
+  if (nums.length < 2){ resultEl.textContent = '—'; return; }
+  var op = (document.getElementById('bpolya-ident-op') && document.getElementById('bpolya-ident-op').value) ? document.getElementById('bpolya-ident-op').value.toLowerCase() : (bpolyaState.op || 'suma');
+  var r;
+  switch(op){
+    case 'suma': r = nums.reduce(function(acc,n){ return acc + n; }, 0); break;
+    case 'resta': r = nums.slice(1).reduce(function(acc,n){ return acc - n; }, nums[0]); break;
+    case 'multiplicacion': r = nums.reduce(function(acc,n){ return acc * n; }, 1); break;
+    case 'division':
+      r = nums[0];
+      for (var i=1;i<nums.length;i++){ if (nums[i] === 0){ resultEl.textContent = 'No permitido'; return; } r = r / nums[i]; }
+      break;
+    default: r = nums.reduce(function(acc,n){ return acc + n; }, 0);
+  }
+  resultEl.textContent = isNaN(r) ? '—' : r;
+}
+
+function bpolyaLoad(){
+  if (!bpolyaState.id) return;
+  
+  var url = "{% url 'biblioteca:cargar_polya' %}?biblioteca_id=" + bpolyaState.id;
+  
+  fetch(url, {
+    method: 'GET',
+    headers: {
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    credentials: 'same-origin'
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(response){
+    if (!response.success) {
+      console.log('Error al cargar Pólya:', response.message);
+      // Inicializar con valores vacíos
+      bpolyaInitEmpty();
+      return;
+    }
+    
+    var data = response.polya || {};
+    
+    // Si no hay datos guardados, inicializar vacío
+    if (!response.polya) {
+      bpolyaInitEmpty();
+      return;
+    }
+    
+    // Cargar datos
+    var ident = document.getElementById('bpolya-ident-op');
+    if (ident) ident.value = data.identificacion_operacion || (bpolyaState.op || '');
+    var pq = document.getElementById('bpolya-por-que'); if (pq) pq.value = data.por_que_esa_operacion || '';
+    bpolyaRenderSumandos(data.sumandos || []);
+    var est = document.getElementById('bpolya-estrategia'); if (est) est.value = data.estrategia_principal || '';
+    var des = document.getElementById('bpolya-desarrollo'); if (des) des.value = data.desarrollo || '';
+    var calcWrap = document.getElementById('bpolya-calc-inputs');
+    if (calcWrap) { calcWrap.innerHTML = ''; }
+    // Por ahora no guardamos calc_numeros en BD, inicializar vacío
+    bpolyaAddCalcInput(''); bpolyaAddCalcInput('');
+    var rev = document.getElementById('bpolya-revision'); if (rev) rev.value = data.revision_verificacion || '';
+    var miRes = document.getElementById('bpolya-mi-resultado'); if (miRes) miRes.value = data.conclusion_final || '';
+  })
+  .catch(function(e){ 
+    console.error('Error al cargar Pólya:', e);
+    bpolyaInitEmpty();
+  });
+}
+
+function bpolyaInitEmpty(){
+  var ident = document.getElementById('bpolya-ident-op');
+  if (ident) ident.value = bpolyaState.op || '';
+  bpolyaRenderSumandos([]);
+  var calcWrap = document.getElementById('bpolya-calc-inputs');
+  if (calcWrap) { calcWrap.innerHTML = ''; }
+  bpolyaAddCalcInput(''); bpolyaAddCalcInput('');
+}
+
+function bpolyaSave(){
+  if (!bpolyaState.id) return;
+  
+  var btn = document.getElementById('bpolyaSaveBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ri-loader-4-line me-1"></i> Guardando...';
+  }
+  
+  var formData = new FormData();
+  formData.append('biblioteca_id', bpolyaState.id);
+  formData.append('identificacion_operacion', document.getElementById('bpolya-ident-op') ? document.getElementById('bpolya-ident-op').value : '');
+  formData.append('por_que_esa_operacion', document.getElementById('bpolya-por-que') ? document.getElementById('bpolya-por-que').value : '');
+  formData.append('sumandos', JSON.stringify(bpolyaGetSumandos()));
+  formData.append('estrategia_principal', document.getElementById('bpolya-estrategia') ? document.getElementById('bpolya-estrategia').value : '');
+  formData.append('desarrollo', document.getElementById('bpolya-desarrollo') ? document.getElementById('bpolya-desarrollo').value : '');
+  formData.append('revision_verificacion', document.getElementById('bpolya-revision') ? document.getElementById('bpolya-revision').value : '');
+  formData.append('conclusion_final', document.getElementById('bpolya-mi-resultado') ? document.getElementById('bpolya-mi-resultado').value : '');
+  
+  var url = "{% url 'biblioteca:guardar_polya' %}";
+  
+  fetch(url, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: formData,
+    credentials: 'same-origin'
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(response){
+    if (btn) {
+      btn.disabled = false;
+      if (response.success) {
+        btn.classList.remove('btn-primary'); btn.classList.add('btn-success');
+        btn.innerHTML = '<i class="ri-check-line me-1"></i> Guardado';
+        setTimeout(function(){
+          btn.classList.remove('btn-success'); btn.classList.add('btn-primary');
+          btn.innerHTML = '<i class="ri-save-3-line me-1"></i> Guardar';
+        }, 2000);
+      } else {
+        btn.classList.remove('btn-primary'); btn.classList.add('btn-danger');
+        btn.innerHTML = '<i class="ri-close-line me-1"></i> Error';
+        setTimeout(function(){
+          btn.classList.remove('btn-danger'); btn.classList.add('btn-primary');
+          btn.innerHTML = '<i class="ri-save-3-line me-1"></i> Guardar';
+        }, 2000);
+        console.error('Error al guardar:', response.message);
+      }
+    }
+  })
+  .catch(function(e){
+    if (btn) {
+      btn.disabled = false;
+      btn.classList.remove('btn-primary'); btn.classList.add('btn-danger');
+      btn.innerHTML = '<i class="ri-close-line me-1"></i> Error';
+      setTimeout(function(){
+        btn.classList.remove('btn-danger'); btn.classList.add('btn-primary');
+        btn.innerHTML = '<i class="ri-save-3-line me-1"></i> Guardar';
+      }, 2000);
+    }
+    console.error('Error al guardar Pólya:', e);
+  });
+}
+
+function bpolyaSetup(id, operacion){
+  bpolyaState.id = id; bpolyaState.op = operacion || bpolyaState.op || '';
+  // Inicializar listeners (overwrite handlers cada vez)
+  var addS = document.getElementById('bpolya-add-sumando'); if (addS) addS.onclick = function(){ var cur = bpolyaGetSumandos(); cur.push(''); bpolyaRenderSumandos(cur); };
+  var addCalc = document.getElementById('bpolya-add-calc-input'); if (addCalc) addCalc.onclick = function(){ bpolyaAddCalcInput(''); };
+  var calcBtn = document.getElementById('bpolya-calc'); if (calcBtn) calcBtn.onclick = bpolyaCalc;
+  var saveBtn = document.getElementById('bpolyaSaveBtn'); if (saveBtn) saveBtn.onclick = bpolyaSave;
+  // Preseleccionar operación si existe
+  var ident = document.getElementById('bpolya-ident-op'); if (ident && bpolyaState.op && !ident.value){ ident.value = bpolyaState.op; }
+  bpolyaLoad();
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  var btnComprension = document.getElementById('btnConfirmarComprension');
+  if (btnComprension) {
+    btnComprension.addEventListener('click', function(){
+      var seleccion = document.querySelector('input[name="comprensionTema"]:checked');
+      if (!seleccion || seleccion.value !== 'si') {
+        return;
+      }
+      if (!bibliotecaIdActual) {
+        return;
+      }
+      var formData = new FormData();
+      formData.append('biblioteca_id', bibliotecaIdActual);
+      var url = "{% url 'biblioteca:marcar_contenido_visto' %}";
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: formData,
+        credentials: 'same-origin'
+      }).then(function(r){ return r.json(); }).then(function(j){
+        console.log('marcar_contenido_visto', j);
+        if (j.success === true) {
+          btnComprension.classList.remove('btn-primary');
+          btnComprension.classList.add('btn-success');
+          btnComprension.innerHTML = '<i class="ri-check-line me-1"></i> Confirmado';
+          btnComprension.disabled = true;
+          
+          setTimeout(function() {
+             var modalEl = document.getElementById('contentModal');
+             var modal = bootstrap.Modal.getInstance(modalEl);
+             if(modal) modal.hide();
+          }, 1000);
+        } else {
+          console.error("Error confirmando:", j.message);
+          alert("Error: " + (j.message || "Fallo en el servidor"));
+        }
+      }).catch(function(e){ 
+        console.error("Fetch Error:", e); 
+        alert("Error de red o servidor al confirmar.");
+      });
+    });
+  }
+});
+
+function getCookie(name) {
+  var cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    var cookies = document.cookie.split(';');
+    for (var i = 0; i < cookies.length; i++) {
+      var cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
 }
 
     let timeLeft = 30;

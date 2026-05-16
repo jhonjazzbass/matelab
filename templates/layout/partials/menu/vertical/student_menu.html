@@ -23,16 +23,16 @@
         <div class="text-truncate">Inicio</div>
       </a>
     </li>
-    <li class="menu-item {% if request.resolver_match.url_name == 'misiones' %}active{% endif %}">
-      <a href="{% url 'misiones:misiones' %}" class="menu-link">
-        <i class="menu-icon icon-base ri ri-rocket-line"></i>
-        <div class="text-truncate">Misiones</div>
-      </a>
-    </li>
     <li class="menu-item {% if request.resolver_match.url_name == 'opciones_aprendizaje' %}active{% endif %}">
       <a href="{% url 'opciones_aprendizaje' %}" class="menu-link">
         <i class="menu-icon icon-base ri ri-lightbulb-flash-line"></i>
         <div class="text-truncate">Biblioteca</div>
+      </a>
+    </li>
+    <li class="menu-item {% if request.resolver_match.url_name == 'misiones' %}active{% endif %}">
+      <a href="{% url 'misiones:misiones' %}" class="menu-link">
+        <i class="menu-icon icon-base ri ri-rocket-line"></i>
+        <div class="text-truncate">Misiones</div>
       </a>
     </li>
     <li class="menu-item {% if request.resolver_match.url_name == 'mapa_progreso' %}active{% endif %}">

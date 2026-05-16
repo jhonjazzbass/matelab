@@ -135,37 +135,27 @@
          <div class="table-responsive">
   <table class="table table-hover" id="misionesTable">
     <thead>
-      <tr>
-        <th>Estudiante</th>
+      <tr> 
         <th>Misión</th>
         <th>Estado</th>
-        <th>Calificación</th>
-        <th>Último Intento</th>
-        <th>Progreso</th>
       </tr>
     </thead>
     <tbody>
       {% for intento in intentos_estudiantes %}
-      <tr>
-        <td>{{ intento.estudiante.nombre_usuario }}</td>
+      <tr> 
         <td>{{ intento.mision.titulo }}</td>
         <td>
-          <span class="badge bg-{{ intento.completada|yesno:'success,warning' }}">
-            {{ intento.completada|yesno:"Completada,En Progreso" }}
-          </span>
-        </td>
-        <td>{{ intento.puntos_obtenidos|default:"-" }}</td>
-        <td>{{ intento.fecha_intento|timesince }}</td>
-        <td>
-          <div class="progress" style="height: 6px;">
-            <div class="progress-bar bg-{{ intento.completada|yesno:'success,warning' }}" 
-                 role="progressbar" 
-                 style="width: {{ intento.porcentaje_completado }}%" 
-                 aria-valuenow="{{ intento.porcentaje_completado }}" 
-                 aria-valuemin="0" 
-                 aria-valuemax="100"></div>
-          </div>
-        </td>
+          {% if intento.estado == 'completado' %}
+          <span class="badge bg-success">Completada</span>
+          {% elif intento.estado == 'rechazado' %}
+          <span class="badge bg-danger">Incorrecto</span>
+          {% elif intento.estado == 'en_progreso' %}
+          <span class="badge bg-warning">En Progreso</span>
+          {% else %}
+          <span class="badge bg-secondary">{{ intento.get_estado_display }}</span>
+          {% endif %}
+        </td> 
+ 
       </tr>
       {% endfor %}
     </tbody>
@@ -271,7 +261,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize DataTable
   $('#misionesTable').DataTable({
     responsive: true,
-    order: [[4, 'desc']],  // Sort by last attempt by default
+    order: [[0, 'asc']],  // Sort by mission name by default
     language: {
       search: "",
       searchPlaceholder: "Buscar misiones...",

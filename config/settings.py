@@ -38,15 +38,16 @@ if not SECRET_KEY:
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = 'RENDER' not in os.environ
 
+RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 # ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1"]
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 # Current DJANGO_ENVIRONMENT
-ENVIRONMENT = os.environ.get("DJANGO_ENVIRONMENT", default="local")
+ENVIRONMENT = os.environ.get("ENVIRONMENT", default="local")
 
 
 # Application definition
@@ -86,14 +87,6 @@ MIDDLEWARE = [
 # config/settings.py
 AUTH_USER_MODEL = 'authentication.Usuarios'  # Update this line
 
-MIGRATION_MODULES = {
-    'admin': None,
-    'auth': None,
-    'contenttypes': None,
-    'sessions': None,
-    'authentication': 'apps.authentication.migrations',
-}
-
 ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
@@ -128,24 +121,26 @@ WSGI_APPLICATION = "config.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# config/settings.py
-# config/settings.py
+# Database
+# https://docs.djangoproject.com/en/5.0/ref/settings/#databases
+
+import dj_database_url
+
 DATABASES = {
     'default': {
-        'ENGINE': 'mssql',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'matematicasdb',
-        'HOST': 'localhost\\SQLEXPRESS',
-        'USER': '',  # Leave empty for Windows Authentication
-        'PASSWORD': '',  # Leave empty for Windows Authentication
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'extra_params': 'Trusted_Connection=yes;Encrypt=yes;TrustServerCertificate=yes'
-        },
+        'USER': 'jhonatan',
+        'PASSWORD': 'jazzbass',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
     }
 }
 
-
-
+# En producción (ej. Render), sobrescribir la base de datos con la URL remota
+db_from_env = dj_database_url.config(conn_max_age=600)
+if db_from_env:
+    DATABASES['default'].update(db_from_env)
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -189,9 +184,16 @@ STATICFILES_DIRS = [
     BASE_DIR / "src" / "assets",
 ]
 
+
+if not DEBUG:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+
 # Default URL on which Django application runs for specific environment
 BASE_URL = os.environ.get("BASE_URL", default="http://127.0.0.1:8000")
-
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

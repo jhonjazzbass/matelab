@@ -6,8 +6,9 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 from web_project import TemplateLayout
-from .models import Biblioteca
+from .models import Biblioteca, Biblioteca_Contenido, Biblioteca_Usuario, PolyaBiblioteca, Sumandos_Biblioteca
 import random
+import json
 
 class GestionBibliotecaView(TemplateView):
     template_name = 'gestion_biblioteca.html'
@@ -41,7 +42,7 @@ class GestionBibliotecaView(TemplateView):
         contenidos_data = []
         for contenido in contenidos:
             contenidos_data.append({
-                'id': contenido.id,
+                'biblioteca_id': contenido.biblioteca_id,
                 'titulo': contenido.titulo,
                 'descripcion': contenido.descripcion,
                 'tipo': contenido.tipo,
@@ -73,12 +74,25 @@ def crear_contenido(request):
                 activo=request.POST.get('activo', '1') == '1',
                 usuario=request.user
             )
+            contenido_detalle_id = None
+            if request.POST.get('tipo') == 'Contenido':
+                teoria = request.POST.get('teoria', '')
+                pasos_trucos = request.POST.get('pasos_trucos', '')
+                ejemplo = request.POST.get('ejemplo', '')
+                detalle = Biblioteca_Contenido.objects.create(
+                    biblioteca=contenido,
+                    teoria=teoria,
+                    pasos_trucos=pasos_trucos,
+                    ejemplo=ejemplo
+                )
+                contenido_detalle_id = detalle.biblioteca_contenido_id
             
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({
                     'success': True,
                     'message': 'Contenido creado exitosamente',
-                    'id': contenido.id
+                    'id': contenido.biblioteca_id,
+                    'biblioteca_contenido_id': contenido_detalle_id
                 })
             
             messages.success(request, 'Contenido creado exitosamente')
@@ -100,15 +114,15 @@ def crear_contenido(request):
 def actualizar_contenido(request):
     try:
         data = request.POST
-        user_id = data.get('id')
+        biblioteca_id = data.get('biblioteca_id') or data.get('id')
         
-        if not user_id:
-            return JsonResponse({'success': False, 'error': 'ID de usuario no proporcionado'}, status=400)
+        if not biblioteca_id:
+            return JsonResponse({'success': False, 'error': 'ID de contenido no proporcionado'}, status=400)
         
         try:
-            biblioteca = Biblioteca.objects.get(id=user_id)
+            biblioteca = Biblioteca.objects.get(biblioteca_id=biblioteca_id)
         except Biblioteca.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Usuario no encontrado'}, status=404)
+            return JsonResponse({'success': False, 'error': 'Contenido no encontrado'}, status=404)
         
         # Update user data
         biblioteca.titulo = data.get('titulo', biblioteca.titulo)
@@ -129,18 +143,18 @@ def actualizar_contenido(request):
 def eliminar_contenido(request):
     try:
         data = request.POST
-        user_id = data.get('id')
+        biblioteca_id = data.get('biblioteca_id') or data.get('id')
         
-        if not user_id:
-            return JsonResponse({'success': False, 'error': 'ID de usuario no proporcionado'}, status=400)
+        if not biblioteca_id:
+            return JsonResponse({'success': False, 'error': 'ID de contenido no proporcionado'}, status=400)
         
         try:
-            biblioteca = Biblioteca.objects.get(id=user_id)
+            biblioteca = Biblioteca.objects.get(biblioteca_id=biblioteca_id)
             biblioteca.delete()
             return JsonResponse({'success': True})
             
         except Biblioteca.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'Usuario no encontrado'}, status=404)
+            return JsonResponse({'success': False, 'error': 'Contenido no encontrado'}, status=404)
             
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
@@ -234,3 +248,157 @@ def practica(request):
     }
     
     return render(request, 'practicas/practica.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def marcar_contenido_visto(request):
+    try:
+        biblioteca_id = request.POST.get('biblioteca_id') or request.GET.get('biblioteca_id')
+        if not biblioteca_id:
+            return JsonResponse({'success': False, 'message': 'biblioteca_id requerido'}, status=400)
+
+        try:
+            biblioteca = Biblioteca.objects.get(biblioteca_id=biblioteca_id)
+        except Biblioteca.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Contenido de biblioteca no encontrado'}, status=404)
+
+        obj, _created = Biblioteca_Usuario.objects.update_or_create(
+            usuario=request.user,
+            biblioteca=biblioteca,
+            defaults={'estado': True}
+        )
+
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def guardar_polya_biblioteca(request):
+    """Guarda o actualiza el trabajo de Pólya para un contenido de biblioteca"""
+    try:
+        biblioteca_id = request.POST.get('biblioteca_id')
+        if not biblioteca_id:
+            return JsonResponse({'success': False, 'message': 'biblioteca_id requerido'}, status=400)
+
+        try:
+            biblioteca = Biblioteca.objects.get(biblioteca_id=biblioteca_id)
+        except Biblioteca.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Contenido de biblioteca no encontrado'}, status=404)
+
+        # Obtener o crear el registro de Pólya
+        polya, created = PolyaBiblioteca.objects.get_or_create(
+            usuario=request.user,
+            biblioteca=biblioteca
+        )
+
+        # Actualizar campos del método de Pólya
+        polya.identificacion_operacion = request.POST.get('identificacion_operacion', '')
+        polya.por_que_esa_operacion = request.POST.get('por_que_esa_operacion', '')
+        polya.que_se_pide = request.POST.get('que_se_pide', '')
+        polya.datos_conocidos = request.POST.get('datos_conocidos', '')
+        polya.incognitas = request.POST.get('incognitas', '')
+        polya.representacion = request.POST.get('representacion', '')
+        polya.estrategia_principal = request.POST.get('estrategia_principal', '')
+        polya.desarrollo = request.POST.get('desarrollo', '')
+        polya.resultados_intermedios = request.POST.get('resultados_intermedios', '')
+        polya.revision_verificacion = request.POST.get('revision_verificacion', '')
+        polya.comprobacion_otro_metodo = request.POST.get('comprobacion_otro_metodo', '')
+        polya.conclusion_final = request.POST.get('conclusion_final', '')
+        
+        confianza = request.POST.get('confianza')
+        if confianza:
+            try:
+                polya.confianza = int(confianza)
+            except ValueError:
+                pass
+
+        polya.save()
+
+        # Guardar sumandos
+        sumandos_json = request.POST.get('sumandos')
+        if sumandos_json:
+            try:
+                sumandos_list = json.loads(sumandos_json)
+                # Eliminar sumandos existentes
+                Sumandos_Biblioteca.objects.filter(polya_biblioteca=polya).delete()
+                # Crear nuevos sumandos
+                for sumando_valor in sumandos_list:
+                    if sumando_valor:  # Solo si no está vacío
+                        Sumandos_Biblioteca.objects.create(
+                            polya_biblioteca=polya,
+                            sumando=str(sumando_valor)
+                        )
+            except json.JSONDecodeError:
+                pass
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Método de Pólya guardado exitosamente',
+            'polya_id': polya.id
+        })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def cargar_polya_biblioteca(request):
+    """Carga el trabajo de Pólya para un contenido de biblioteca"""
+    try:
+        biblioteca_id = request.GET.get('biblioteca_id')
+        if not biblioteca_id:
+            return JsonResponse({'success': False, 'message': 'biblioteca_id requerido'}, status=400)
+
+        try:
+            biblioteca = Biblioteca.objects.get(biblioteca_id=biblioteca_id)
+        except Biblioteca.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'Contenido de biblioteca no encontrado'}, status=404)
+
+        # Buscar el registro de Pólya
+        try:
+            polya = PolyaBiblioteca.objects.get(
+                usuario=request.user,
+                biblioteca=biblioteca
+            )
+            
+            # Obtener sumandos
+            sumandos = Sumandos_Biblioteca.objects.filter(polya_biblioteca=polya).values_list('sumando', flat=True)
+            
+            data = {
+                'success': True,
+                'polya': {
+                    'id': polya.id,
+                    'identificacion_operacion': polya.identificacion_operacion or '',
+                    'por_que_esa_operacion': polya.por_que_esa_operacion or '',
+                    'que_se_pide': polya.que_se_pide or '',
+                    'datos_conocidos': polya.datos_conocidos or '',
+                    'incognitas': polya.incognitas or '',
+                    'representacion': polya.representacion or '',
+                    'estrategia_principal': polya.estrategia_principal or '',
+                    'desarrollo': polya.desarrollo or '',
+                    'resultados_intermedios': polya.resultados_intermedios or '',
+                    'revision_verificacion': polya.revision_verificacion or '',
+                    'comprobacion_otro_metodo': polya.comprobacion_otro_metodo or '',
+                    'conclusion_final': polya.conclusion_final or '',
+                    'confianza': polya.confianza,
+                    'sumandos': list(sumandos),
+                    'created_at': polya.created_at.isoformat() if polya.created_at else None,
+                    'updated_at': polya.updated_at.isoformat() if polya.updated_at else None
+                }
+            }
+            return JsonResponse(data)
+            
+        except PolyaBiblioteca.DoesNotExist:
+            # No existe registro previo
+            return JsonResponse({
+                'success': True,
+                'polya': None,
+                'message': 'No hay datos guardados previamente'
+            })
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)

@@ -1,4 +1,5 @@
 # apps/authentication/models.py
+# apps/authentication/models.py
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth.hashers import make_password, check_password as django_check_password
@@ -13,8 +14,7 @@ class CustomUserManager(BaseUserManager):
         return user
 
     def create_superuser(self, nombre_usuario, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
+        # El manager asume estos campos, aunque los manejaremos por propiedades abajo
         return self.create_user(nombre_usuario, password, **extra_fields)
 
 class Rol(models.Model):
@@ -23,7 +23,7 @@ class Rol(models.Model):
 
     class Meta:
         db_table = 'Rol'
-        managed = False  # La tabla ya existe en la base de datos
+        managed = True 
 
     def __str__(self):
         return self.tipo
@@ -42,7 +42,7 @@ class Usuarios(models.Model):
 
     class Meta:
         db_table = 'Usuarios'
-        managed = False  # Importante: No gestiona la creación/eliminación
+        managed = True 
 
     def __str__(self):
         return self.nombre_usuario
@@ -56,6 +56,28 @@ class Usuarios(models.Model):
         """
         return django_check_password(raw_password, self.contraseña_hash)
 
+    # --- INYECCIÓN PARA EL ADMIN NATIVO DE DJANGO ---
+    
+    def get_username(self):
+        """Devuelve el campo de nombre de usuario configurado."""
+        return self.nombre_usuario
+
+    @property
+    def is_active(self):
+        # Mapea 'is_active' al campo 'estado'
+        return self.estado
+
+    @property
+    def is_staff(self):
+        # Solo permite entrar al admin si el rol es Administrador
+        if self.rol_id:
+            return self.rol.tipo == 'Administrador'
+        return False
+
+    @property
+    def is_superuser(self):
+        # Otorga permisos totales si es Administrador
+        return self.is_staff
 
     def has_perm(self, perm, obj=None):
         return self.is_superuser
@@ -70,3 +92,16 @@ class Usuarios(models.Model):
     @property
     def is_anonymous(self):
         return False
+
+class Auditoria_Usuario(models.Model):
+    id = models.AutoField(primary_key=True)
+    usuario_id = models.ForeignKey(Usuarios, on_delete=models.CASCADE, db_column='usuario_id')
+    fecha = models.CharField(max_length=100)
+    accion = models.CharField(max_length=100) 
+
+    class Meta:
+        db_table = 'Auditoria_Usuario'
+        managed = True 
+
+    def __str__(self):
+        return str(self.usuario_id)

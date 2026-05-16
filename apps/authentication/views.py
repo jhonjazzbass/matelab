@@ -1,15 +1,14 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, login as auth_login
+from django.contrib.auth.hashers import check_password, make_password
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.generic import TemplateView
+
 from apps.authentication.models import Usuarios, Rol
 from web_project import TemplateLayout
 from web_project.template_helpers.theme import TemplateHelper
-from django.contrib.auth.hashers import make_password
 from ..dashboards.user_views import GestionUsuariosView
-from django.contrib.auth.hashers import check_password
-from apps.authentication.models import Usuarios
 
 TEMPLATE_MAP = {
     "estudiante": "layout/partials/menu/vertical/student_menu.html",
@@ -17,13 +16,13 @@ TEMPLATE_MAP = {
     "admin": "layout/partials/menu/vertical/admin_menu.html",
 }
 
-
 """
 This file is a view controller for multiple pages as a module.
 Here you can override the page view layout.
 Refer to auth/urls.py file for more pages.
 """
-
+def home_redirect(request):
+    return redirect('auth-login-basic') 
 
 class AuthView(TemplateView):
     # Predefined function
@@ -49,7 +48,6 @@ def _build_login_context():
     )
     return context
 
- 
 
 def login_view(request):
     context = _build_login_context()
@@ -57,20 +55,28 @@ def login_view(request):
     if request.method == "POST":
         username = request.POST.get("nombre_usuario") 
         password = request.POST.get("password")
+        
         try:
             user = Usuarios.objects.get(nombre_usuario=username)
         except Usuarios.DoesNotExist:
             user = None
 
         if user is not None:
+            # Lógica para contraseñas en texto plano (legado)
             if user.contraseña_hash == password:
                 user_auth = authenticate(request, nombre_usuario=username, contraseña_hash=password)
-                auth_login(request, user_auth)
-                return redirect("/")
+                if user_auth is not None:
+                    # Corrección aplicada aquí
+                    auth_login(request, user_auth, backend='apps.authentication.backends.auth.CustomAuthBackend')
+                    return redirect("/welcome")
+            
+            # Lógica para contraseñas encriptadas (seguro)
             elif check_password(password, user.contraseña_hash):     
                 user_auth = authenticate(request, nombre_usuario=username, contraseña_hash=user.contraseña_hash)
-                auth_login(request, user_auth)
-                return redirect("/")
+                if user_auth is not None:
+                    # Corrección aplicada aquí
+                    auth_login(request, user_auth, backend='apps.authentication.backends.auth.CustomAuthBackend')
+                    return redirect("/welcome")
  
         messages.error(request, "Usuario o contraseña inválidos")
 
@@ -128,4 +134,3 @@ def register_view(request, template):
             return render(request, template, context)
     
     return render(request, template, context)
- 
