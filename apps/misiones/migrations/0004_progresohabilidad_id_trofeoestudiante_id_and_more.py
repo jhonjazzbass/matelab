@@ -13,6 +13,14 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunSQL(
+            'ALTER TABLE "Progreso_Habilidad" DROP CONSTRAINT IF EXISTS "Progreso_Habilidad_pkey" CASCADE;',
+            reverse_sql=migrations.RunSQL.noop
+        ),
+        migrations.RunSQL(
+            'ALTER TABLE "Trofeo_Estudiante" DROP CONSTRAINT IF EXISTS "Trofeo_Estudiante_pkey" CASCADE;',
+            reverse_sql=migrations.RunSQL.noop
+        ),
         migrations.AddField(
             model_name='progresohabilidad',
             name='id',
